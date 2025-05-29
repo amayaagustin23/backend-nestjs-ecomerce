@@ -1,0 +1,16 @@
+{
+  "recoverPassword": {
+    "subject": "Recupera tu contraseña",
+    "body": "<p>Para recuperar tu contraseña, haz clic en el siguiente enlace:</p><a href=\"{redirectUrl}\">Recuperar contraseña</a>"
+  },
+  "newPassword": {
+    "subject": "Acción requerida: Crea una nueva contraseña",
+    "body": "<p>Es necesario que crees una nueva contraseña para continuar utilizando tu cuenta. Haz clic en el siguiente enlace para realizar el cambio.</p><a href=\"{redirectUrl}\">Cambiar contraseña</a>"
+  },
+  "resetPassword": {
+    "subject": "Cambio de contraseña",
+    "body": "<p>Su contraseña fue cambiada exitosamente</p>"
+  },
+  "changePassword": "Su contraseña fue cambiada exitosamente",
+  "sendEmailURL": "Se envio el enlace, verifique su cuenta de correo electronico"
+}

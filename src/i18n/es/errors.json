@@ -1,0 +1,21 @@
+{
+  "validations": {
+    "isUUID": "El identificador debe ser un UUID válido",
+    "isNotEmpty": "{property} no puede estar vacío",
+    "isString": "{property} debe ser una cadena",
+    "isEmail": "{property} debe ser una dirección de correo electrónico válida",
+    "isPositive": "{property} debe ser un número positivo",
+    "isDate": "{property} debe estar en formato UTC0 válido",
+    "isPassword": "{property} debe contener al menos un número, una letra minúscula y una letra mayúscula, y tener al menos 8 caracteres",
+    "wrongBirthdate": "La fecha de nacimiento debe estar en el pasado",
+    "invalidCredentials": "Credenciales inválidas",
+    "samePassword": "La nueva contraseña debe ser diferente a la anterior",
+    "requiredField": "{property} es requerido",
+    "passwordComparison": "Las contraseñas no son iguales"
+  },
+  "notFound": "{model} no encontrado",
+  "conflict": "{model} ya existe con algunos de los datos proporcionados",
+  "forbidden": "No tienes permiso para realizar esta acción",
+  "fileUpload": "Se produjo un error al cargar el archivo",
+  "emailNotRegistered": "Email no registrado"
+}

@@ -1,0 +1,21 @@
+{
+  "validations": {
+    "isUUID": "The identifier must be a valid UUID",
+    "isNotEmpty": "{property} cannot be empty",
+    "isString": "{property} must be a string",
+    "isEmail": "{property} must be a valid email address",
+    "isPositive": "{property} must be a positive number",
+    "isDate": "{property} must be in a valid UTC0 format",
+    "isPassword": "{property} must contain at least one number, one lowercase letter and one uppercase letter, and have at least 8 characters",
+    "wrongBirthdate": "The birthdate must be in the past",
+    "invalidCredentials": "Invalid credentials",
+    "samePassword": "The new password must be different from the previous one",
+    "requiredField": "{property} is required",
+    "passwordComparison": "Passwords do not match"
+  },
+  "notFound": "{model} not found",
+  "conflict": "{model} already exists with some of the provided data",
+  "forbidden": "You do not have permission to perform this action",
+  "fileUpload": "An error occurred while uploading the file",
+  "emailNotRegistered": "Email not registered"
+}

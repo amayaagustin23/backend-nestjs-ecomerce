@@ -1,0 +1,16 @@
+{
+  "recoverPassword": {
+    "subject": "Recover your password",
+    "body": "<p>To recover your password, click on the following link:</p><a href=\"{redirectUrl}\">Recover password</a>"
+  },
+  "newPassword": {
+    "subject": "Action required: Create a new password",
+    "body": "<p>You need to create a new password to continue using your account. Click the following link to make the change.</p><a href=\"{redirectUrl}\">Change password</a>"
+  },
+  "resetPassword": {
+    "subject": "Change password",
+    "body": "<p>Your password was changed successfully</p>"
+  },
+  "changePassword": "Your password was changed successfully",
+  "sendEmailURL": "The link has been sent, please verify your email account"
+}

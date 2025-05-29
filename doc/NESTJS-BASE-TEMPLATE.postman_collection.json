@@ -1,0 +1,357 @@
+{
+	"info": {
+		"_postman_id": "536d3972-f611-493a-af51-854edc48df34",
+		"name": "NESTJS-BASE-TEMPLATE Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25328215"
+	},
+	"item": [
+		{
+			"name": "AUTH",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{accessToken}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"test\",\n    \"lastName\": \"test\",\n    \"email\": \"test@gmail.com\",\n    \"birthDate\": \"2000-12-04 22:52:45.189\",\n    \"nationality\": \"Argentina\",\n    \"password\": \"Pass1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BACKEND_URL}}/auth/register",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var json = JSON.parse(responseBody);",
+									"pm.environment.set(\"accessToken\", `Bearer ${json.tokens.accessToken}`);",
+									"pm.environment.set(\"refreshToken\", `Bearer ${json.tokens.refreshToken}`);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"superadmin@gmail.com\",\n    \"password\": \"Pass1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BACKEND_URL}}/auth/login",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Recover Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"gastondanielsen85@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BACKEND_URL}}/auth/recover-password",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"auth",
+								"recover-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjOTllNGUzLWQzMDUtNDA1My05MDU0LTZjN2NmNTllYjMwYiIsImVtYWlsIjoiZ2FzdG9uZGFuaWVsc2VuODVAZ21haWwuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3MjU0NTYxMzAsImV4cCI6MTcyNTU0MjUzMH0.JbG8mzhYcUR6yBpove7DdGk-To4lCH0qIl76VSWrK5k",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"Pass1234\",\n    \"confirmPassword\": \"Pass12346\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BACKEND_URL}}/auth/reset-password",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{accessToken}}",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{BACKEND_URL}}/auth/logout",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "USERS",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"test\",\n    \"lastName\": \"test\",\n    \"email\": \"test@gmail.com\",\n    \"birthDate\": \"2000-12-04 22:52:45.189\",\n    \"nationality\": \"Argentina\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BACKEND_URL}}/users",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{accessToken}}",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{BACKEND_URL}}/users?page=1&perPage=10",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "perPage",
+									"value": "10"
+								},
+								{
+									"key": "orderBy",
+									"value": "createdAt",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "user",
+									"disabled": true
+								},
+								{
+									"key": "startDate",
+									"value": "2024-09-01T00:00:00.000Z",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "2024-09-04T00:00:00.000Z",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get One User",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{accessToken}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BACKEND_URL}}/users/a9a279e7-c3b7-4bf6-bc8a-663a56fe496b",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"users",
+								"a9a279e7-c3b7-4bf6-bc8a-663a56fe496b"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{accessToken}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"user1\",\n    \"lastName\": \"user1\",\n    \"email\": \"user1@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BACKEND_URL}}/users/20dc8ee5-c7dc-4121-9627-702411c429e0",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"users",
+								"20dc8ee5-c7dc-4121-9627-702411c429e0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{accessToken}}",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{BACKEND_URL}}/users/4837b074-14fa-4a06-84a0-ee8b93c631f9",
+							"host": [
+								"{{BACKEND_URL}}"
+							],
+							"path": [
+								"users",
+								"4837b074-14fa-4a06-84a0-ee8b93c631f9"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

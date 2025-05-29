@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  nestjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '4000:4000'
+    depends_on:
+      - db_postgres
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db_postgres:5432/db_example
+
+  db_postgres:
+    image: postgres:latest
+    container_name: db_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=db_example
+    ports:
+      - '5438:5432'
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - '80:80'
+    depends_on:
+      - db_postgres
