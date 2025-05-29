@@ -113,7 +113,7 @@
     "@smithy/util-utf8" "^2.0.0"
     tslib "^2.6.2"
 
-"@aws-sdk/client-s3@^3.637.0":
+"@aws-sdk/client-s3@^3.817.0":
   version "3.817.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/client-s3/-/client-s3-3.817.0.tgz#841840d2a03581b706ba564820335b96497a1c15"
   integrity sha512-nZyjhlLMEXDs0ofWbpikI8tKoeKuuSgYcIb6eEZJk90Nt5HkkXn6nkWOs/kp2FdhpoGJyTILOVsDgdm7eutnLA==
@@ -516,6 +516,20 @@
     "@smithy/util-middleware" "^4.0.2"
     tslib "^2.6.2"
 
+"@aws-sdk/s3-request-presigner@^3.817.0":
+  version "3.817.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/s3-request-presigner/-/s3-request-presigner-3.817.0.tgz#214d4058844342dfd9246fa01046d22f04996fcb"
+  integrity sha512-FMV0YefefGwPqIbGcHdkkHaiVWKIZoI0wOhYhYDZI129aUD5+CEOtTi7KFp1iJjAK+Cx9bW5tAYc+e9shaWEyQ==
+  dependencies:
+    "@aws-sdk/signature-v4-multi-region" "3.816.0"
+    "@aws-sdk/types" "3.804.0"
+    "@aws-sdk/util-format-url" "3.804.0"
+    "@smithy/middleware-endpoint" "^4.1.6"
+    "@smithy/protocol-http" "^5.1.0"
+    "@smithy/smithy-client" "^4.2.6"
+    "@smithy/types" "^4.2.0"
+    tslib "^2.6.2"
+
 "@aws-sdk/signature-v4-multi-region@3.816.0":
   version "3.816.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/signature-v4-multi-region/-/signature-v4-multi-region-3.816.0.tgz#76670e7adc3309e3e50bc4360805c2b5142f9399"
@@ -564,6 +578,16 @@
     "@aws-sdk/types" "3.804.0"
     "@smithy/types" "^4.2.0"
     "@smithy/util-endpoints" "^3.0.4"
+    tslib "^2.6.2"
+
+"@aws-sdk/util-format-url@3.804.0":
+  version "3.804.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/util-format-url/-/util-format-url-3.804.0.tgz#47046b636e6044a910ad007fac2d3cd580ae5a3b"
+  integrity sha512-1nOwSg7B0bj5LFGor0udF/HSdvDuSCxP+NC0IuSOJ5RgJ2AphFo03pLtK2UwArHY5WWZaejAEz5VBND6xxOEhA==
+  dependencies:
+    "@aws-sdk/types" "3.804.0"
+    "@smithy/querystring-builder" "^4.0.2"
+    "@smithy/types" "^4.2.0"
     tslib "^2.6.2"
 
 "@aws-sdk/util-locate-window@^3.0.0":
@@ -2004,7 +2028,7 @@
     "@smithy/types" "^4.3.0"
     tslib "^2.6.2"
 
-"@smithy/querystring-builder@^4.0.3":
+"@smithy/querystring-builder@^4.0.2", "@smithy/querystring-builder@^4.0.3":
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/@smithy/querystring-builder/-/querystring-builder-4.0.3.tgz#056a17082e0a0ab10c817380d96321a8bba588fd"
   integrity sha512-UUzIWMVfPmDZcOutk2/r1vURZqavvQW0OHvgsyNV0cKupChvqg+/NKPRMaMEe+i8tP96IthMFeZOZWpV+E4RAw==
@@ -6273,12 +6297,24 @@ mime-db@1.52.0:
   resolved "https://registry.yarnpkg.com/mime-db/-/mime-db-1.52.0.tgz#bbabcdc02859f4987301c856e3387ce5ec43bf70"
   integrity sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==
 
+mime-db@^1.54.0:
+  version "1.54.0"
+  resolved "https://registry.yarnpkg.com/mime-db/-/mime-db-1.54.0.tgz#cddb3ee4f9c64530dff640236661d42cb6a314f5"
+  integrity sha512-aU5EJuIN2WDemCcAp2vFBfp/m4EAhWJnUNSSw0ixs7/kXbd6Pg64EmwJkNdFhB8aWt1sH2CTXrLxo/iAGV3oPQ==
+
 mime-types@^2.1.12, mime-types@^2.1.27, mime-types@~2.1.24, mime-types@~2.1.34:
   version "2.1.35"
   resolved "https://registry.yarnpkg.com/mime-types/-/mime-types-2.1.35.tgz#381a871b62a734450660ae3deee44813f70d959a"
   integrity sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==
   dependencies:
     mime-db "1.52.0"
+
+mime-types@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/mime-types/-/mime-types-3.0.1.tgz#b1d94d6997a9b32fd69ebaed0db73de8acb519ce"
+  integrity sha512-xRc4oEhT6eaBpU1XF7AjpOFD+xQmXNB5OVKwp4tqCuBpHLS/ZbBDrc07mYTDqVMg6PfxUjjNp85O6Cd2Z/5HWA==
+  dependencies:
+    mime-db "^1.54.0"
 
 mime@1.6.0:
   version "1.6.0"
@@ -8517,6 +8553,11 @@ utils-merge@1.0.1, utils-merge@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
+
+uuid@^11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
+  integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
 
 uuid@^9.0.0, uuid@^9.0.1:
   version "9.0.1"

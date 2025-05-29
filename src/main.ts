@@ -1,4 +1,8 @@
-import { ClassSerializerInterceptor, Logger } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Logger,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestApplication, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -22,6 +26,11 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+    }),
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
     }),
   );
   app.useGlobalFilters(new ValidationErrorExceptionFilter());

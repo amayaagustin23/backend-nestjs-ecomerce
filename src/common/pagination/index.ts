@@ -9,17 +9,22 @@ export interface PaginationResult<T> {
 
 export const paginatePrisma = async <
   T,
-  Args extends { where?: any; skip?: number; take?: number },
+  Where,
+  Args extends {
+    where?: Where;
+    skip?: number;
+    take?: number;
+  },
 >(
   model: {
     findMany: (args: Args) => Promise<T[]>;
-    count: (args: Pick<Args, 'where'>) => Promise<number>;
+    count: (args: { where?: Where }) => Promise<number>;
   },
   args: Omit<Args, 'skip' | 'take'>,
   pagination: PaginationArgs,
 ): Promise<PaginationResult<T>> => {
-  const page = pagination.page ?? 1;
-  const size = pagination.perPage ?? 10;
+  const page = pagination?.page ? Number(pagination.page) : 1;
+  const size = pagination.perPage ? Number(pagination.perPage) : 10;
   const skip = (page - 1) * size;
   const take = size;
 

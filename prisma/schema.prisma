@@ -100,14 +100,16 @@ model Address {
 
 model Product {
   id              String           @id @default(uuid())
-  name            String
+  name            String           @unique
   description     String
   price           Float
   isService       Boolean          @default(false)
   isActive        Boolean          @default(true)
-  hasDelivery     Boolean?
+  hasDelivery     Boolean          @default(true)
   categoryId      String
   category        Category         @relation(fields: [categoryId], references: [id])
+  brandId      String
+  brand        Brand         @relation(fields: [brandId], references: [id])
   images          ProductImage[]
   orderItems      OrderItem[]
   cartItems       CartItem[]
@@ -140,6 +142,13 @@ model Category {
   parentId    String?
   parent      Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryToParent")
+  products    Product[]
+}
+
+model Brand {
+  id          String     @id @default(uuid())
+  name        String
+  code String?
   products    Product[]
 }
 

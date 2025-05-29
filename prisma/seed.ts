@@ -7,6 +7,12 @@ const prisma = new PrismaClient();
 async function main() {
   const password = await hash('Pass1234', 10);
 
+  await prisma.brand.createMany({
+    data: [{ name: 'Nike' }, { name: 'Adidas' }, { name: 'Puma' }],
+  });
+
+  const brandList = await prisma.brand.findMany();
+
   // Crear usuario admin
   await prisma.user.create({
     data: {
@@ -23,7 +29,7 @@ async function main() {
     },
   });
 
-  // Crear múltiples usuarios clientes con direcciones
+  // Crear clientes
   for (let i = 1; i <= 3; i++) {
     await prisma.user.create({
       data: {
@@ -59,6 +65,8 @@ async function main() {
     });
   }
 
+  // Crear categorías
+  // Crear categorías padre
   await prisma.category.createMany({
     data: [
       { name: 'Remeras', description: 'Ropa superior básica' },
@@ -67,27 +75,52 @@ async function main() {
     ],
   });
 
-  const categorias = await prisma.category.findMany();
+  const allParentCategories = await prisma.category.findMany({
+    where: { parentId: null },
+  });
 
-  const talles = ['XS', 'S', 'M', 'L', 'XL'];
-  const colores = ['Negro', 'Blanco', 'Rojo', 'Azul'];
+  // Crear subcategorías
+  for (const parent of allParentCategories) {
+    await prisma.category.createMany({
+      data: [
+        {
+          name: `Sub ${parent.name} A`,
+          description: `Primera subcategoría de ${parent.name}`,
+          parentId: parent.id,
+        },
+        {
+          name: `Sub ${parent.name} B`,
+          description: `Segunda subcategoría de ${parent.name}`,
+          parentId: parent.id,
+        },
+      ],
+    });
+  }
 
+  const categories = await prisma.category.findMany();
+
+  const sizes = ['M', 'L', 'XL'];
+  const colors = ['Negro'];
+
+  // Crear productos
   for (let i = 1; i <= 15; i++) {
-    const categoria = categorias[i % categorias.length];
+    const category = categories[i % categories.length];
+    const brand = brandList[i % brandList.length];
 
     const product = await prisma.product.create({
       data: {
-        name: `${categoria.name} Producto ${i}`,
+        name: `${category.name} Producto ${i}`,
         description: faker.commerce.productDescription(),
         price: parseFloat(faker.commerce.price({ min: 5000, max: 20000 })),
         isService: false,
         isActive: true,
         hasDelivery: true,
-        categoryId: categoria.id,
+        categoryId: category.id,
+        brandId: brand.id,
         images: {
           create: [
             {
-              url: `https://via.placeholder.com/500x500.png?text=${encodeURIComponent(categoria.name)}+${i}`,
+              url: `https://via.placeholder.com/500x500.png?text=${encodeURIComponent(category.name)}+${i}`,
               description: `Imagen del producto ${i}`,
               order: 1,
             },
@@ -96,8 +129,8 @@ async function main() {
       },
     });
 
-    for (const size of talles) {
-      for (const color of colores) {
+    for (const size of sizes) {
+      for (const color of colors) {
         await prisma.productVariant.create({
           data: {
             size,
@@ -111,13 +144,13 @@ async function main() {
   }
 
   console.log(
-    '✅ Seed completo con usuarios, direcciones, categorías y productos con variantes.',
+    '✅ Seed generado con marcas, usuarios, direcciones, categorías y productos con variantes.',
   );
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error al ejecutar el seed:', e);
+    console.error('❌ Error en el seed:', e);
     process.exit(1);
   })
   .finally(async () => {

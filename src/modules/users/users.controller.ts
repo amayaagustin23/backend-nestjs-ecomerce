@@ -12,11 +12,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { HasRoleEnums } from 'src/common/decorators/has-roles.decorator';
+import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
-import { RoleEnum } from 'src/constants';
+import { Role } from 'src/constants';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
-import { RoleEnumsGuard } from '../auth/guards/roles.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { UpdateUserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
@@ -25,8 +25,8 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get()
   @ApiOperation({
     summary: 'Gets a paginated list of all users',
@@ -37,8 +37,8 @@ export class UsersController {
     return this.usersService.getAllUsers(pagination);
   }
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Gets a user by its ID' })
   @ApiBearerAuth()
@@ -47,8 +47,8 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Patch(':id')
   @ApiOperation({ summary: 'Updates an existing user' })
   @ApiBearerAuth()
@@ -60,8 +60,8 @@ export class UsersController {
     return this.usersService.updateUser(id, data);
   }
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Deletes a user' })
   @ApiBearerAuth()

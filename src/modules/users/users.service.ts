@@ -126,7 +126,7 @@ export class UsersService {
     };
 
     const paginated = await paginatePrisma(
-      this.prisma.user,
+      this.user,
       {
         where,
         include: { person: true },

@@ -1,26 +1,180 @@
-import { Injectable } from '@nestjs/common';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { I18nService } from 'nestjs-i18n';
+import {
+  CategoryParsed,
+  CategoryRaw,
+} from 'src/common/interfaces/index.interface';
+import { paginatePrisma } from 'src/common/pagination';
+import { PaginationArgs } from 'src/common/pagination/pagination.interface';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import { parseDateToRange } from 'src/utils/parsers';
+import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 
 @Injectable()
 export class CategoriesService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  private category: Prisma.CategoryDelegate;
+  constructor(
+    private prisma: PrismaService,
+    private readonly i18n: I18nService,
+  ) {
+    this.category = prisma.category;
   }
 
-  findAll() {
-    return `This action returns all categories`;
+  async getRaw<T extends Prisma.CategoryFindUniqueArgs>(
+    input: Prisma.SelectSubset<T, Prisma.CategoryFindUniqueArgs>,
+  ) {
+    input.where = {
+      ...input.where,
+    };
+    return this.category.findUnique<T>(input);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async create(body: CreateCategoryDto) {
+    const { subcategories, ...rest } = body;
+    const category = await this.category.create({ data: { ...rest } });
+
+    const subCategoriesList = subcategories?.length
+      ? await Promise.all(
+          subcategories.map(async ({ name, description }) => ({
+            name,
+            description,
+            parent: { connect: { id: category.id } },
+          })),
+        )
+      : [];
+    const subCategoriesParsed = [];
+    for (const data of subCategoriesList) {
+      const sub = await this.category.create({ data });
+      subCategoriesParsed.push(sub);
+    }
+    return { ...category, subcategories: subCategoriesParsed };
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async getAllCategories(pagination: PaginationArgs) {
+    const { search, date, startDate, endDate } = pagination;
+
+    const dateFilter = date
+      ? parseDateToRange(date)
+      : startDate && endDate
+        ? { gte: startDate, lte: endDate }
+        : undefined;
+
+    const where: Prisma.CategoryWhereInput = {
+      ...(search && {
+        OR: [
+          {
+            name: { contains: search, mode: 'insensitive' },
+          },
+          {
+            description: { contains: search, mode: 'insensitive' },
+          },
+        ],
+      }),
+      parent: null,
+      ...(dateFilter && { createdAt: dateFilter }),
+    };
+
+    const prismaArgs = {
+      where,
+      include: { children: true },
+    };
+
+    if (pagination.page && pagination.perPage) {
+      const paginated = await paginatePrisma(
+        this.category,
+        prismaArgs,
+        pagination,
+      );
+      const { data, ...rest } = paginated;
+
+      return {
+        data: this.parseCategories(data),
+        ...rest,
+      };
+    } else {
+      const results = await this.category.findMany(prismaArgs);
+      return this.parseCategories(results);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async getCategoryId(id: string) {
+    const category = await this.getRaw({
+      where: { id },
+      include: {
+        children: true,
+      },
+    });
+
+    if (!category) {
+      throw new ForbiddenException(
+        this.i18n.t('errors.notFound', { args: { model: 'Category' } }),
+      );
+    }
+
+    return await this.transformCategory(category);
+  }
+
+  async update(id: string, dto: UpdateCategoryDto) {
+    const { name, description, subcategories, subcategoriesToDelete } = dto;
+
+    await this.category.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(description && { description }),
+      },
+    });
+
+    if (subcategoriesToDelete?.length) {
+      await this.category.deleteMany({
+        where: {
+          id: { in: subcategoriesToDelete },
+          parentId: id,
+        },
+      });
+    }
+
+    if (subcategories?.length) {
+      const operations = subcategories.map((sub) => {
+        if (sub.id) {
+          return this.category.update({
+            where: { id: sub.id },
+            data: {
+              name: sub.name,
+              description: sub.description,
+            },
+          });
+        } else {
+          return this.category.create({
+            data: {
+              name: sub.name,
+              description: sub.description,
+              parentId: id,
+            },
+          });
+        }
+      });
+      await Promise.all(operations);
+    }
+
+    return { message: 'Category updated successfully' };
+  }
+
+  private parseCategories(data: CategoryRaw[]): CategoryParsed[] {
+    return data
+      .filter((cat) => cat.parentId === null)
+      .map((cat) => this.transformCategory(cat));
+  }
+
+  private transformCategory(cat: CategoryRaw): CategoryParsed {
+    return {
+      id: cat.id,
+      name: cat.name,
+      description: cat.description,
+      subcategories: (cat.children || []).map((child) =>
+        this.transformCategory(child),
+      ),
+    };
   }
 }

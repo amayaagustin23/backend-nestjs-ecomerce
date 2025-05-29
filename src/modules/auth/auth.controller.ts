@@ -16,7 +16,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AccessTokenGuard } from './guards/access-token.guard';
-import { RoleEnumsGuard } from './guards/roles.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -56,7 +56,7 @@ export class AuthController {
   }
 
   // ******** RESET PASSWORD ********
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password' })
   @ApiBody({ type: ResetPasswordDto })

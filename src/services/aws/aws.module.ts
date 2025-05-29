@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AwsService } from './aws.service';
+import { UploadService } from './aws.service';
 
 @Module({
-  providers: [AwsService],
-  exports: [AwsService],
+  providers: [UploadService],
+  exports: [UploadService],
 })
-export class AwsModule {}
+export class UploadModule {}

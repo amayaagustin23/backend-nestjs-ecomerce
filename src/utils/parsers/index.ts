@@ -12,3 +12,6 @@ export const parseDateToRange = (date: Date): DateRange => {
     lt: newDate.endOf('day').toISOString(),
   };
 };
+
+export const toBoolean = (value: any): boolean =>
+  value === 'true' || value === true;

@@ -8,10 +8,11 @@ export const CORS: CorsOptions = {
   credentials: true,
 };
 
-export enum RoleEnum {
+export enum Role {
   SUPERADMIN = 'SUPERADMIN',
   ADMIN = 'ADMIN',
   USER = 'USER',
+  CLIENT = 'CLIENT',
 }
 
 export type FileType = 'img' | 'document';
