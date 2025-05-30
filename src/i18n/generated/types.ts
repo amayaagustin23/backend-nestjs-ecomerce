@@ -20,6 +20,10 @@ export type I18nTranslations = {
         };
         "changePassword": string;
         "sendEmailURL": string;
+        "notificationCartActive": {
+            "subject": string;
+            "body": string;
+        };
     };
     "errors": {
         "validations": {

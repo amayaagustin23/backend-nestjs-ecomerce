@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Person, User } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { EMAIL_PROVIDER, EmailService } from './messaging.types';
 
@@ -50,6 +51,32 @@ export class MessagingService {
     const subject = this.i18n.t('emails.recoverPassword.subject');
     const body = this.i18n.t('emails.recoverPassword.body', {
       args: { redirectUrl },
+    });
+
+    await this.emailService.send({
+      from,
+      to,
+      subject,
+      body,
+    });
+  }
+
+  async sendNotificationCartActive(input: {
+    from: string;
+    to: string;
+    user: User & { person: Person };
+  }) {
+    const { from, to, user } = input;
+
+    const subject = await this.i18n.t('emails.notificationCartActive.subject', {
+      args: { name: user.person?.name || user.email },
+    });
+
+    const body = await this.i18n.t('emails.notificationCartActive.body', {
+      args: {
+        name: user.person?.name || user.email,
+        email: user.email,
+      },
     });
 
     await this.emailService.send({

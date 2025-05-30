@@ -1,0 +1,223 @@
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import { CartStatus, Prisma } from '@prisma/client';
+import * as moment from 'moment';
+import { I18nService } from 'nestjs-i18n';
+import { MessagingService } from 'src/services/messaging/messaging.service';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import { CreateCartDto, UpdateCartDto } from './dto/carts.dto';
+
+@Injectable()
+export class CartsService {
+  private cart: Prisma.CartDelegate;
+  private cartItem: Prisma.CartItemDelegate;
+  constructor(
+    private prisma: PrismaService,
+    private readonly i18n: I18nService,
+    private readonly messagingService: MessagingService,
+  ) {
+    this.cart = prisma.cart;
+    this.cartItem = prisma.cartItem;
+  }
+
+  async getRaw<T extends Prisma.CartFindUniqueArgs>(
+    input: Prisma.SelectSubset<T, Prisma.CartFindUniqueArgs>,
+  ) {
+    input.where = {
+      ...input.where,
+    };
+    input.include = { items: { include: { product: true, variant: true } } };
+    return this.cart.findUnique<T>(input);
+  }
+
+  async get(input: { where: Prisma.CartWhereInput }) {
+    const { where } = input;
+    const cart = await this.cart.findFirst({
+      where: { ...where },
+      include: { items: { include: { product: true, variant: true } } },
+    });
+    if (!cart) return undefined;
+    return cart;
+  }
+
+  async create(body: CreateCartDto, userId: string) {
+    const existCartActiveByUser = await this.get({
+      where: { user: { id: userId }, status: CartStatus.ACTIVE },
+    });
+
+    if (existCartActiveByUser) {
+      throw new ConflictException(
+        this.i18n.t('errors.conflict', { args: { model: 'Cart' } }),
+      );
+    }
+
+    const data: Prisma.CartCreateInput = {
+      user: { connect: { id: userId } },
+      items: {
+        create: body.items.map((item) => ({
+          quantity: item.quantity,
+          product: { connect: { id: item.productId } },
+          variant: { connect: { id: item.variantId } },
+        })),
+      },
+    };
+    return await this.cart.create({ data }).catch((e) => {
+      if (e.code === 'P2002') {
+        throw new ConflictException(
+          this.i18n.t('errors.conflict', { args: { model: 'Brand' } }),
+        );
+      }
+      throw e;
+    });
+  }
+
+  async getAllByUser(userId: string) {
+    const where: Prisma.CartWhereInput = {
+      userId,
+    };
+    return await this.cart.findMany({
+      where,
+      include: { items: { include: { product: true, variant: true } } },
+    });
+  }
+
+  async update(id: string, dto: UpdateCartDto, userId: string) {
+    const existingCart = await this.cart.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+
+    if (!existingCart || existingCart.userId !== userId) {
+      throw new NotFoundException(
+        this.i18n.t('notFound', { args: { model: 'Cart' } }),
+      );
+    }
+
+    const { itemsToAdd, itemsToUpdate, itemsToDelete } = dto;
+
+    if (itemsToDelete?.length) {
+      await this.cartItem.deleteMany({
+        where: { id: { in: itemsToDelete } },
+      });
+    }
+    if (itemsToUpdate?.length) {
+      await Promise.all(
+        itemsToUpdate.map((item) =>
+          this.cartItem.update({
+            where: { id: item.id },
+            data: { quantity: item.quantity },
+          }),
+        ),
+      );
+    }
+
+    if (itemsToAdd?.length) {
+      await Promise.all(
+        itemsToAdd.map((item) =>
+          this.cartItem.create({
+            data: {
+              quantity: item.quantity,
+              cart: { connect: { id } },
+              product: { connect: { id: item.productId } },
+              variant: { connect: { id: item.variantId } },
+            },
+          }),
+        ),
+      );
+    }
+
+    return {
+      message: this.i18n.t('translations.updated', { args: { model: 'Cart' } }),
+    };
+  }
+
+  async getVerifyStockCart(id: string) {
+    const cart = await this.cart.findUnique({
+      where: { id },
+      include: { items: { include: { product: true, variant: true } } },
+    });
+
+    const itemsCart = [];
+    const recomendationMap = new Map<string, any>();
+
+    for (const item of cart.items) {
+      const { variant, quantity } = item;
+
+      const recomendations = await this.prisma.product.findMany({
+        where: {
+          category: { id: item.product.categoryId },
+          variants: {
+            some: {
+              OR: [{ size: variant.size }, { color: variant.color }],
+            },
+          },
+        },
+        include: { variants: true, category: true, brand: true },
+      });
+
+      if (variant.stock >= quantity) {
+        itemsCart.push(item);
+      } else {
+        itemsCart.push({
+          ...item,
+          error: `El producto ${item.product.name} no cuenta con stock suficiente`,
+        });
+      }
+
+      for (const rec of recomendations) {
+        recomendationMap.set(rec.id, rec);
+      }
+    }
+
+    return {
+      ...cart,
+      items: itemsCart,
+      recomendations: Array.from(recomendationMap.values()),
+    };
+  }
+
+  @Cron('*/30 * * * *')
+  async sendNotificationsByCartActive() {
+    const thirtyMinutesAgo = moment().subtract(30, 'minutes').toDate();
+
+    const cartsByActive = await this.cart.findMany({
+      where: {
+        status: CartStatus.ACTIVE,
+        createdAt: { lt: thirtyMinutesAgo },
+      },
+      include: {
+        user: { include: { person: true } },
+      },
+    });
+
+    for (const { user } of cartsByActive) {
+      await this.messagingService.sendNotificationCartActive({
+        from: 'no-reply@tusitio.com',
+        to: user.email,
+        user,
+      });
+    }
+  }
+
+  @Cron('0 3 * * *')
+  async disabledCarts() {
+    const oneDayAgo = moment().subtract(24, 'hours').toDate();
+    const where: Prisma.CartWhereInput = {
+      status: CartStatus.ACTIVE,
+      createdAt: { lt: oneDayAgo },
+    };
+    const cartsByActive = await this.cart.findMany({
+      where,
+    });
+    for (const cart of cartsByActive) {
+      await this.cart.update({
+        where: { id: cart.id },
+        data: { status: CartStatus.EXPIRED },
+      });
+    }
+  }
+}

@@ -11,6 +11,10 @@
     "subject": "Cambio de contraseña",
     "body": "<p>Su contraseña fue cambiada exitosamente</p>"
   },
+  "notificationCartActive": {
+    "subject": "Hola {{name}}, tenés productos pendientes en tu carrito 🛒",
+    "body": "Hola {{name}},\n\nNotamos que tenés productos en tu carrito que aún no finalizaste. ¡Aprovechá antes de que se agoten!\n\nPodés continuar tu compra ingresando a tu cuenta con el correo: {{email}}.\n\n¡Te esperamos!"
+  },
   "changePassword": "Su contraseña fue cambiada exitosamente",
   "sendEmailURL": "Se envio el enlace, verifique su cuenta de correo electronico"
 }

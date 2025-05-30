@@ -10,10 +10,10 @@ import { paginatePrisma } from 'src/common/pagination';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { parseDateToRange } from 'src/utils/parsers';
-import { CreateBrandDto, UpdateBrandDto } from './dto/brand.dto';
+import { CreateBrandDto, UpdateBrandDto } from './dto/brands.dto';
 
 @Injectable()
-export class BrandService {
+export class BrandsService {
   private brand: Prisma.BrandDelegate;
   constructor(
     private prisma: PrismaService,

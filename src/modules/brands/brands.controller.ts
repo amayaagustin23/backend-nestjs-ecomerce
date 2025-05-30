@@ -25,13 +25,13 @@ import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { Role } from 'src/constants';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { BrandService } from './brand.service';
-import { CreateBrandDto, UpdateBrandDto } from './dto/brand.dto';
+import { CreateBrandDto, UpdateBrandDto } from './dto/brands.dto';
+import { BrandsService } from './brands.service';
 
 @ApiTags('Brands')
 @Controller('brands')
-export class BrandController {
-  constructor(private readonly brandService: BrandService) {}
+export class BrandsController {
+  constructor(private readonly brandService: BrandsService) {}
 
   @HasRoles(Role.SUPERADMIN, Role.ADMIN, Role.CLIENT)
   @UseGuards(AccessTokenGuard, RolesGuard)
