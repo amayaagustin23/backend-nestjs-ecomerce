@@ -137,7 +137,7 @@ model ProductImage {
 
 model Category {
   id          String     @id @default(uuid())
-  name        String
+  name        String     @unique
   description String?
   parentId    String?
   parent      Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
@@ -147,8 +147,8 @@ model Category {
 
 model Brand {
   id          String     @id @default(uuid())
-  name        String
-  code String?
+  name        String     @unique
+  code        String?
   products    Product[]
 }
 

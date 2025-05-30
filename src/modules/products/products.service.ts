@@ -62,7 +62,6 @@ export class ProductsService {
           files.map(async (file, index) => ({
             url: await this.uploadService.upload(file),
             order: index,
-            description: '',
           })),
         )
       : [];
@@ -251,29 +250,37 @@ export class ProductsService {
       );
     }
 
-    const updatedProduct = await this.product.update({
-      where: { id },
-      data: {
-        ...rest,
-        isService: toBoolean(rest.isService),
-        isActive: toBoolean(rest.isActive),
-        hasDelivery: toBoolean(rest.hasDelivery),
-        ...(categoryId && { categoryId }),
-        ...(brandId && { brandId }),
-        images: newImages.length
-          ? {
-              create: newImages,
-            }
-          : undefined,
-      },
-      include: {
-        variants: true,
-        images: true,
-        brand: true,
-        category: { include: { parent: true } },
-      },
-    });
-
+    const updatedProduct = await this.product
+      .update({
+        where: { id },
+        data: {
+          ...rest,
+          isService: toBoolean(rest.isService),
+          isActive: toBoolean(rest.isActive),
+          hasDelivery: toBoolean(rest.hasDelivery),
+          ...(categoryId && { categoryId }),
+          ...(brandId && { brandId }),
+          images: newImages.length
+            ? {
+                create: newImages,
+              }
+            : undefined,
+        },
+        include: {
+          variants: true,
+          images: true,
+          brand: true,
+          category: { include: { parent: true } },
+        },
+      })
+      .catch((e) => {
+        if (e.code === 'P2002') {
+          throw new ConflictException(
+            this.i18n.t('errors.conflict', { args: { model: 'Product' } }),
+          );
+        }
+        throw e;
+      });
     if (parsedVariantsToDelete.length) {
       await this.prisma.productVariant.deleteMany({
         where: {
@@ -287,23 +294,41 @@ export class ProductsService {
 
     for (const variant of parsedVariants) {
       if (variant.id) {
-        await this.prisma.productVariant.update({
-          where: { id: variant.id },
-          data: {
-            size: variant.size,
-            color: variant.color,
-            stock: variant.stock,
-          },
-        });
+        await this.prisma.productVariant
+          .update({
+            where: { id: variant.id },
+            data: {
+              size: variant.size,
+              color: variant.color,
+              stock: variant.stock,
+            },
+          })
+          .catch((e) => {
+            if (e.code === 'P2002') {
+              throw new ConflictException(
+                this.i18n.t('errors.conflict', { args: { model: 'Variant' } }),
+              );
+            }
+            throw e;
+          });
       } else {
-        await this.prisma.productVariant.create({
-          data: {
-            size: variant.size,
-            color: variant.color,
-            stock: variant.stock,
-            productId: id,
-          },
-        });
+        await this.prisma.productVariant
+          .create({
+            data: {
+              size: variant.size,
+              color: variant.color,
+              stock: variant.stock,
+              productId: id,
+            },
+          })
+          .catch((e) => {
+            if (e.code === 'P2002') {
+              throw new ConflictException(
+                this.i18n.t('errors.conflict', { args: { model: 'Variante' } }),
+              );
+            }
+            throw e;
+          });
       }
     }
 

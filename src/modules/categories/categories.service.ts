@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import {
@@ -32,8 +37,16 @@ export class CategoriesService {
 
   async create(body: CreateCategoryDto) {
     const { subcategories, ...rest } = body;
-    const category = await this.category.create({ data: { ...rest } });
-
+    const category = await this.category
+      .create({ data: { ...rest } })
+      .catch((e) => {
+        if (e.code === 'P2002') {
+          throw new ConflictException(
+            this.i18n.t('errors.conflict', { args: { model: 'Category' } }),
+          );
+        }
+        throw e;
+      });
     const subCategoriesList = subcategories?.length
       ? await Promise.all(
           subcategories.map(async ({ name, description }) => ({
@@ -118,7 +131,20 @@ export class CategoriesService {
   async update(id: string, dto: UpdateCategoryDto) {
     const { name, description, subcategories, subcategoriesToDelete } = dto;
 
-    await this.category.update({
+    const categoryUsed = await this.prisma.product.findFirst({
+      where: { categoryId: id },
+      select: { id: true },
+    });
+
+    if (categoryUsed) {
+      throw new BadRequestException(
+        await this.i18n.t('errors.conflict', {
+          args: { model: 'Categoría' },
+        }),
+      );
+    }
+
+    await this.prisma.category.update({
       where: { id },
       data: {
         ...(name && { name }),
@@ -127,7 +153,7 @@ export class CategoriesService {
     });
 
     if (subcategoriesToDelete?.length) {
-      await this.category.deleteMany({
+      await this.prisma.category.deleteMany({
         where: {
           id: { in: subcategoriesToDelete },
           parentId: id,
@@ -138,7 +164,7 @@ export class CategoriesService {
     if (subcategories?.length) {
       const operations = subcategories.map((sub) => {
         if (sub.id) {
-          return this.category.update({
+          return this.prisma.category.update({
             where: { id: sub.id },
             data: {
               name: sub.name,
@@ -146,7 +172,7 @@ export class CategoriesService {
             },
           });
         } else {
-          return this.category.create({
+          return this.prisma.category.create({
             data: {
               name: sub.name,
               description: sub.description,
@@ -155,10 +181,15 @@ export class CategoriesService {
           });
         }
       });
+
       await Promise.all(operations);
     }
 
-    return { message: 'Category updated successfully' };
+    return {
+      message: await this.i18n.t('translations.updated', {
+        args: { model: 'Categoría' },
+      }),
+    };
   }
 
   private parseCategories(data: CategoryRaw[]): CategoryParsed[] {

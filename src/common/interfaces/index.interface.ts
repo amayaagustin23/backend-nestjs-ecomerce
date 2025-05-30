@@ -57,3 +57,10 @@ export interface CategoryParsed {
   description: string;
   subcategories: CategoryParsed[];
 }
+
+export interface ExcelColumn {
+  header: string;
+  key: string;
+  width?: number;
+  style?: object;
+}

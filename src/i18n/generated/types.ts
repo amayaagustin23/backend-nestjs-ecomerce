@@ -44,6 +44,8 @@ export type I18nTranslations = {
     };
     "translations": {
         "welcome": string;
+        "updated": string;
+        "deleted": string;
     };
 };
 /* prettier-ignore */
