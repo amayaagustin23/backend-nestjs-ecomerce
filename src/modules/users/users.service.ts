@@ -60,11 +60,9 @@ export class UsersService {
 
     const passwordHashed = await hashPassword(password);
 
-    const decryptedEmail = await this.cryptoService.decrypt(email);
-
     const existingActiveUser = await this.get({
       where: {
-        email: decryptedEmail,
+        email,
         isDeleted: false,
       },
     });
@@ -78,7 +76,7 @@ export class UsersService {
     const user = await this.user
       .create({
         data: {
-          email: await this.cryptoService.encrypt(email),
+          email,
           password: passwordHashed,
           person: {
             create: { ...person },

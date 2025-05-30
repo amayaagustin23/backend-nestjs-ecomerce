@@ -133,6 +133,8 @@ model ProductVariant {
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   cartItems CartItem[]
+  orderItems OrderItem[]
+
 }
 
 model ProductImage {
@@ -188,7 +190,6 @@ model CartItem {
   variant    ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
-
 model Order {
   id               String        @id @default(uuid())
   userId           String
@@ -207,11 +208,13 @@ model Order {
 model OrderItem {
   id        String   @id @default(uuid())
   orderId   String
-  productId String
   quantity  Int
   unitPrice Float
   order     Order    @relation(fields: [orderId], references: [id])
+  productId String
   product   Product  @relation(fields: [productId], references: [id])
+  variantId String
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 model Payment {

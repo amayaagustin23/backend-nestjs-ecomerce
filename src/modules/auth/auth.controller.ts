@@ -23,7 +23,6 @@ import { RolesGuard } from './guards/roles.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // ******** REGISTER ********
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({
@@ -35,7 +34,6 @@ export class AuthController {
     return this.authService.register(userData);
   }
 
-  // ******** LOGIN ********
   @Post('login')
   @ApiOperation({ summary: 'Login a user' })
   @ApiBody({ type: LoginDto })
@@ -45,7 +43,6 @@ export class AuthController {
     return this.authService.login(credentials);
   }
 
-  // ******** RECOVER PASSWORD ********
   @Post('recover-password')
   @ApiOperation({ summary: 'Recover password' })
   @ApiBody({ type: RecoverPasswordDto })
@@ -55,7 +52,6 @@ export class AuthController {
     return this.authService.recoverPassword(body);
   }
 
-  // ******** RESET PASSWORD ********
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password' })

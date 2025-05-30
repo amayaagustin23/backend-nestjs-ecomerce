@@ -14,6 +14,7 @@ import { CreateCartDto, UpdateCartDto } from './dto/carts.dto';
 @Injectable()
 export class CartsService {
   private cart: Prisma.CartDelegate;
+  private variant: Prisma.ProductVariantDelegate;
   private cartItem: Prisma.CartItemDelegate;
   constructor(
     private prisma: PrismaService,
@@ -22,6 +23,7 @@ export class CartsService {
   ) {
     this.cart = prisma.cart;
     this.cartItem = prisma.cartItem;
+    this.variant = prisma.productVariant;
   }
 
   async getRaw<T extends Prisma.CartFindUniqueArgs>(
@@ -55,24 +57,70 @@ export class CartsService {
       );
     }
 
+    const notAdded: string[] = [];
+
+    const variants = await this.variant.findMany({
+      where: {
+        id: { in: body.items.map((item) => item.variantId) },
+      },
+      select: {
+        id: true,
+        stock: true,
+        product: {
+          select: { name: true },
+        },
+      },
+    });
+
+    const validItems = body.items.filter((item) => {
+      const variant = variants.find((v) => v.id === item.variantId);
+      const isValid =
+        variant && variant.stock > 0 && variant.stock >= item.quantity;
+      if (!isValid) {
+        notAdded.push(variant?.product?.name || `variant:${item.variantId}`);
+      }
+      return isValid;
+    });
+
+    if (validItems.length === 0) {
+      return {
+        cart: null,
+        error: this.i18n
+          .t('errors.stockUnavailable')
+          .replace('{{items}}', notAdded.join(', ')),
+      };
+    }
+
     const data: Prisma.CartCreateInput = {
       user: { connect: { id: userId } },
       items: {
-        create: body.items.map((item) => ({
+        create: validItems.map((item) => ({
           quantity: item.quantity,
           product: { connect: { id: item.productId } },
           variant: { connect: { id: item.variantId } },
         })),
       },
     };
-    return await this.cart.create({ data }).catch((e) => {
+
+    try {
+      const cart = await this.cart.create({ data });
+
+      return {
+        cart,
+        error: notAdded.length
+          ? this.i18n.t('errors.stockUnavailable', {
+              args: { items: notAdded.join(', ') },
+            })
+          : '',
+      };
+    } catch (e) {
       if (e.code === 'P2002') {
         throw new ConflictException(
-          this.i18n.t('errors.conflict', { args: { model: 'Brand' } }),
+          this.i18n.t('errors.conflict', { args: { model: 'Cart' } }),
         );
       }
       throw e;
-    });
+    }
   }
 
   async getAllByUser(userId: string) {
@@ -104,6 +152,7 @@ export class CartsService {
         where: { id: { in: itemsToDelete } },
       });
     }
+
     if (itemsToUpdate?.length) {
       await Promise.all(
         itemsToUpdate.map((item) =>
@@ -115,23 +164,51 @@ export class CartsService {
       );
     }
 
+    const notAdded: string[] = [];
+
     if (itemsToAdd?.length) {
-      await Promise.all(
-        itemsToAdd.map((item) =>
-          this.cartItem.create({
-            data: {
-              quantity: item.quantity,
-              cart: { connect: { id } },
-              product: { connect: { id: item.productId } },
-              variant: { connect: { id: item.variantId } },
-            },
-          }),
-        ),
-      );
+      const variants = await this.prisma.productVariant.findMany({
+        where: {
+          id: { in: itemsToAdd.map((item) => item.variantId) },
+        },
+        select: {
+          id: true,
+          stock: true,
+          product: {
+            select: { name: true },
+          },
+        },
+      });
+
+      for (const item of itemsToAdd) {
+        const variant = variants.find((v) => v.id === item.variantId);
+
+        if (!variant || variant.stock <= 0 || variant.stock < item.quantity) {
+          notAdded.push(variant?.product?.name || `variant:${item.variantId}`);
+          continue;
+        }
+
+        await this.cartItem.create({
+          data: {
+            quantity: item.quantity,
+            cart: { connect: { id } },
+            product: { connect: { id: item.productId } },
+            variant: { connect: { id: item.variantId } },
+          },
+        });
+      }
     }
 
     return {
-      message: this.i18n.t('translations.updated', { args: { model: 'Cart' } }),
+      cart: await this.cart.findUnique({
+        where: { id },
+        include: { items: true },
+      }),
+      error: notAdded.length
+        ? this.i18n.t('errors.stockUnavailable', {
+            args: { items: notAdded.join(', ') },
+          })
+        : '',
     };
   }
 

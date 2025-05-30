@@ -15,3 +15,15 @@ export const parseDateToRange = (date: Date): DateRange => {
 
 export const toBoolean = (value: any): boolean =>
   value === 'true' || value === true;
+
+export const capitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+export const formatARS = (value: number): string => {
+  return value.toLocaleString('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2,
+  });
+};

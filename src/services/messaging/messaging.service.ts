@@ -1,6 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Person, User } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
+import {
+  BasicUserInfo,
+  OrderWithItems,
+} from 'src/common/interfaces/index.interface';
+import { capitalize, formatARS } from 'src/utils/parsers';
 import { EMAIL_PROVIDER, EmailService } from './messaging.types';
 
 @Injectable()
@@ -13,12 +18,13 @@ export class MessagingService {
   async sendRegisterUserEmail(input: {
     from: string;
     to: string;
-    redirectUrl: string;
+    user: Partial<BasicUserInfo>;
   }) {
-    const { from, to, redirectUrl } = input;
-    const subject = this.i18n.t('emails.newPassword.subject');
-    const body = this.i18n.t('emails.newPassword.body', {
-      args: { redirectUrl },
+    const { from, to, user } = input;
+
+    const subject = await this.i18n.t('emails.registerEmail.subject');
+    const body = await this.i18n.t('emails.registerEmail.body', {
+      args: { name: user.name },
     });
 
     await this.emailService.send({
@@ -85,5 +91,42 @@ export class MessagingService {
       subject,
       body,
     });
+  }
+
+  async sendPaymentStatusEmail(input: {
+    status: string;
+    from: string;
+    to: string;
+    user: User & { person: Person };
+    order?: OrderWithItems;
+  }) {
+    const { status, from, to, user, order } = input;
+    const name = user.person?.name || user.email;
+
+    const subject = await this.i18n.t(
+      `emails.payment${capitalize(status)}.subject`,
+      { args: { name } },
+    );
+
+    const itemsList = order?.items
+      .map(
+        (item) => `
+      <div>
+        <strong>${item.product.name}</strong> - Talle: ${item.variant.size}, Color: ${item.variant.color}<br/>
+        Cantidad: ${item.quantity} x ${formatARS(item.unitPrice)}
+      </div><br/>
+    `,
+      )
+      .join('');
+
+    const body = (await this.i18n.t(`emails.payment${capitalize(status)}.body`))
+      .replace(/{{name}}/g, name)
+      .replace(/{{orderId}}/g, order?.id ?? '')
+      .replace(/{{subtotal}}/g, formatARS(order?.subtotal ?? 0))
+      .replace(/{{shippingCost}}/g, formatARS(order?.shippingCost ?? 0))
+      .replace(/{{total}}/g, formatARS(order?.total ?? 0))
+      .replace(/{{itemsList}}/g, itemsList ?? '');
+
+    await this.emailService.send({ from, to, subject, body });
   }
 }

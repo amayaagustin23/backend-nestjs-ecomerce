@@ -13,7 +13,6 @@ async function main() {
 
   const brandList = await prisma.brand.findMany();
 
-  // Crear usuario admin
   await prisma.user.create({
     data: {
       email: 'admin@demo.com',
@@ -29,7 +28,6 @@ async function main() {
     },
   });
 
-  // Crear clientes
   for (let i = 1; i <= 3; i++) {
     await prisma.user.create({
       data: {
@@ -65,8 +63,6 @@ async function main() {
     });
   }
 
-  // Crear categorías
-  // Crear categorías padre
   await prisma.category.createMany({
     data: [
       { name: 'Remeras', description: 'Ropa superior básica' },
@@ -79,7 +75,6 @@ async function main() {
     where: { parentId: null },
   });
 
-  // Crear subcategorías
   for (const parent of allParentCategories) {
     await prisma.category.createMany({
       data: [
@@ -102,7 +97,6 @@ async function main() {
   const sizes = ['M', 'L', 'XL'];
   const colors = ['Negro'];
 
-  // Crear productos
   for (let i = 1; i <= 15; i++) {
     const category = categories[i % categories.length];
     const brand = brandList[i % brandList.length];

@@ -5,7 +5,6 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-// import * as fs from 'fs';
 import { catchError, tap } from 'rxjs/operators';
 
 @Injectable()
@@ -66,9 +65,6 @@ export class LoggerInterceptor implements NestInterceptor {
           null,
           2,
         );
-
-        // Guardar logs de errores
-        // fs.appendFileSync('error.log', `${errorMessage}\n${errorDetails}\n\n`);
 
         console.error('\x1b[31m', errorMessage);
         console.error('\x1b[33m', `⚠️ ERROR DETAIL: ${errorDetails}`);

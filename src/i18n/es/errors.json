@@ -13,9 +13,21 @@
     "requiredField": "{property} es requerido",
     "passwordComparison": "Las contraseñas no son iguales"
   },
+  "errorsMercadopago": {
+    "missingOrderId": "Falta el ID de la orden en los metadatos.",
+    "paymentCompleted": "La orden de pago ya fue procesada o no existe.",
+    "mercadoPagoRequest": "Ocurrió un error al comunicarse con Mercado Pago"
+  },
+  "payments": {
+    "successfullyProcessed": "Compra aprobada y procesada correctamente.",
+    "cancelled": "Pago cancelado. Orden actualizada como cancelada.",
+    "ignoredStatus": "Estado de pago ignorado: {{status}}",
+    "processingError": "Error al procesar el webhook de Mercado Pago"
+  },
   "notFound": "{model} no encontrado",
   "conflict": "{model} ya existe con algunos de los datos proporcionados",
   "forbidden": "No tienes permiso para realizar esta acción",
   "fileUpload": "Se produjo un error al cargar el archivo",
-  "emailNotRegistered": "Email no registrado"
+  "emailNotRegistered": "Email no registrado",
+  "stockUnavailable": "Los siguientes productos no tienen stock suficiente: {{items}}"
 }

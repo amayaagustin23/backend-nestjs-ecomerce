@@ -65,19 +65,10 @@ export class AuthService {
   async register(userData: RegisterUserDto) {
     const user = await this.userService.registerUserClient(userData);
 
-    const token = await this.jwtService.signAsync(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      this.jwtConfig.access,
-    );
-
     await this.messagingService.sendRegisterUserEmail({
       from: this.messagingConfig.emailSender,
       to: user.email,
-      redirectUrl: `${this.messagingConfig.registerUserUrls.backoffice}/${token}`,
+      user,
     });
 
     return user;

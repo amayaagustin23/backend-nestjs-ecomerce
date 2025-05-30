@@ -1,4 +1,10 @@
-import { Role } from '@prisma/client';
+import {
+  Order,
+  OrderItem,
+  Product,
+  ProductVariant,
+  Role,
+} from '@prisma/client';
 
 export interface BasicUserInfo {
   id: string;
@@ -63,4 +69,13 @@ export interface ExcelColumn {
   key: string;
   width?: number;
   style?: object;
+}
+
+export interface OrderItemWithDetails extends OrderItem {
+  product: Pick<Product, 'name'>;
+  variant: Pick<ProductVariant, 'size' | 'color'>;
+}
+
+export interface OrderWithItems extends Order {
+  items: OrderItemWithDetails[];
 }

@@ -1,58 +1,55 @@
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { log } from 'console';
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
 import { PreferenceRequest } from 'mercadopago/dist/clients/preference/commonTypes';
 
+@Injectable()
 export class MercadopagoService {
   private client: MercadoPagoConfig;
-  private get mercadopagoConfig() {
-    return {
-      accessToken: this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN'),
-      webhookUrl: this.configService.get<string>('MERCADOPAGO_WEBHOOK_URL'),
-    };
-  }
+  private webhookUrl: string;
+
   constructor(private readonly configService: ConfigService) {
-    this.client = new MercadoPagoConfig({
-      accessToken: this.mercadopagoConfig.accessToken,
-    });
+    const accessToken = this.configService.get<string>(
+      'MERCADOPAGO_ACCESS_TOKEN',
+    );
+    this.webhookUrl = this.configService.get<string>('MERCADOPAGO_WEBHOOK_URL');
+
+    this.client = new MercadoPagoConfig({ accessToken });
   }
 
-  async createPayment(purchaseId: string, amount: number) {
+  async createPreference({
+    orderId,
+    amount,
+    metadata,
+  }: {
+    orderId: string;
+    amount: number;
+    metadata: Record<string, any>;
+  }) {
     const preferenceData: PreferenceRequest = {
       items: [
         {
-          id: purchaseId,
-          title: `Purchase ${purchaseId}`,
+          id: orderId,
+          title: `Orden #${orderId}`,
           unit_price: amount,
           quantity: 1,
           currency_id: 'ARS',
         },
       ],
-      notification_url: this.mercadopagoConfig.webhookUrl,
+      notification_url: this.webhookUrl,
       metadata: {
-        purchaseId,
+        orderId,
+        ...metadata,
       },
+      external_reference: orderId,
     };
 
-    try {
-      const preference = new Preference(this.client);
-      const result = await preference.create({ body: preferenceData });
-      log(result);
-      return result;
-    } catch (error) {
-      console.error('Error al crear el pago:', error);
-      throw new Error('Falló la creación del pago');
-    }
+    const preference = new Preference(this.client);
+    return await preference.create({ body: preferenceData });
   }
 
   async getPayment(id: string) {
-    try {
-      const paymentClient = new Payment(this.client);
-      const result = await paymentClient.get({ id });
-      return result;
-    } catch (error) {
-      console.error('Error al obtener el pago:', error);
-      throw new Error('Falló la obtención del pago');
-    }
+    const paymentClient = new Payment(this.client);
+    return await paymentClient.get({ id });
   }
 }
