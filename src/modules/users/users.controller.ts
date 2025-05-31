@@ -76,15 +76,15 @@ export class UsersController {
 
   @HasRoles(Role.CLIENT)
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Patch('exchange-coupon/:id')
+  @Patch('exchange-coupon/:code')
   @ApiOperation({ summary: 'Updates an existing user' })
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   exchangeCoupon(
-    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('code') code: string,
     @GetCurrentUser('userId') userId: string,
   ) {
-    return this.usersService.exchangeCoupon(id, userId);
+    return this.usersService.exchangeCoupon(code, userId);
   }
 
   @HasRoles(Role.SUPERADMIN, Role.ADMIN)

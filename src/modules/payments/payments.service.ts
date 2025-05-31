@@ -33,7 +33,6 @@ export class PaymentsService {
     try {
       const payment = await this.mercadopagoService.getPayment(paymentId);
       const orderId = payment.metadata?.order_id;
-
       if (!orderId) {
         throw new Error(this.i18n.t('errors.errorsMercadopago.missingOrderId'));
       }
@@ -106,7 +105,10 @@ export class PaymentsService {
               data: { stock: { decrement: quantity } },
             });
           }
-
+          await this.prisma.user.update({
+            where: { id: cart.userId },
+            data: { points: { increment: order.total * 0.05 } },
+          });
           return {
             message: this.i18n.t('errors.payments.successfullyProcessed'),
           };

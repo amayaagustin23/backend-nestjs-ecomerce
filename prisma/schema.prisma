@@ -76,6 +76,10 @@ enum CouponStatus {
   REDEEMED
 }
 
+enum CouponType {
+  EXCHANGE_POINT
+  PROMOTION
+}
 
 
 model User {
@@ -188,11 +192,13 @@ model Coupon {
   description String
   value       Int
   price       Int
+  type        CouponType    @default(EXCHANGE_POINT)
   code        String        @unique
   status      CouponStatus  @default(ACTIVE)
   expiresAt   DateTime
   users       UserCoupon[]  
   cart        Cart?
+  order       Order?
   createdAt   DateTime      @default(now())
 }
 
@@ -200,7 +206,7 @@ model UserCoupon {
   userId   String
   couponId String
   assignedAt DateTime @default(now())
-
+  enabled   Boolean   @default(true)
   user   User   @relation(fields: [userId], references: [id])
   coupon Coupon @relation(fields: [couponId], references: [id])
 
@@ -224,6 +230,9 @@ model CartItem {
   productId  String
   variantId  String
   quantity   Int
+  unitPrice  Float
+  discount   Float?
+  finalPrice Float
   cart       Cart            @relation(fields: [cartId], references: [id])
   product    Product         @relation(fields: [productId], references: [id])
   variant    ProductVariant? @relation(fields: [variantId], references: [id])
@@ -242,19 +251,24 @@ model Order {
   shippingCost     Float
   createdAt        DateTime      @default(now())
   paymentConfirmed DateTime?
+  couponId  String?    @unique 
+  coupon    Coupon?    @relation(fields: [couponId], references: [id])
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
-  orderId   String
-  quantity  Int
-  unitPrice Float
-  order     Order    @relation(fields: [orderId], references: [id])
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  variantId String
+  id         String   @id @default(uuid())
+  orderId    String
+  quantity   Int
+  unitPrice  Float
+  discount   Float?
+  finalPrice Float
+  order      Order    @relation(fields: [orderId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  variantId  String
   variant    ProductVariant? @relation(fields: [variantId], references: [id])
 }
+
 
 model Payment {
   id                  String   @id @default(uuid())

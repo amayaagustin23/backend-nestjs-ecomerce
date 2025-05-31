@@ -11,7 +11,8 @@
     "invalidCredentials": "Credenciales inválidas",
     "samePassword": "La nueva contraseña debe ser diferente a la anterior",
     "requiredField": "{property} es requerido",
-    "passwordComparison": "Las contraseñas no son iguales"
+    "passwordComparison": "Las contraseñas no son iguales",
+    "cartEmpty": "Tu carrito está vacío. Agregá productos para continuar."
   },
   "errorsMercadopago": {
     "missingOrderId": "Falta el ID de la orden en los metadatos.",
@@ -29,5 +30,10 @@
   "forbidden": "No tienes permiso para realizar esta acción",
   "fileUpload": "Se produjo un error al cargar el archivo",
   "emailNotRegistered": "Email no registrado",
-  "stockUnavailable": "Los siguientes productos no tienen stock suficiente: {{items}}"
+  "stockUnavailable": "Los siguientes productos no tienen stock suficiente: {{items}}",
+  "CouponDisabled": "El cupon canjeado con puntos ya no está disponible",
+  "CouponDisabledPromotion": "El cupon promocional ya expiró",
+  "couponAlreadyClaimed": "Este cupón ya fue canjeado por el usuario.",
+  "couponExpired": "Este cupón ya expiró.",
+  "insufficientPoints": "No tenés puntos suficientes para canjear este cupón. Requiere {{required}} y tenés {{available}}."
 }

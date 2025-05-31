@@ -4,14 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { CartStatus, Prisma } from '@prisma/client';
+import { CartStatus, CouponType, Prisma } from '@prisma/client';
 import * as moment from 'moment';
 import { I18nService } from 'nestjs-i18n';
-import {
-  ParsedCart,
-  ProductItemCart,
-  RawCart,
-} from 'src/common/interfaces/index.interface';
 import { MessagingService } from 'src/services/messaging/messaging.service';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { CreateCartDto, UpdateCartDto } from './dto/carts.dto';
@@ -42,13 +37,7 @@ export class CartsService {
       items: { include: { product: true, variant: true } },
     };
 
-    const cart = await this.cart.findUnique(input);
-
-    if (!cart) {
-      throw new Error('Carrito no encontrado');
-    }
-
-    return this.parseCartWithDiscount(cart as any);
+    return await this.cart.findUnique(input);
   }
 
   async get(input: { where: Prisma.CartWhereInput }) {
@@ -65,13 +54,43 @@ export class CartsService {
   }
 
   async create(body: CreateCartDto, userId: string) {
+    if (body.couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({
+        where: { code: body.couponCode },
+      });
+
+      if (!coupon) {
+        throw new NotFoundException(
+          this.i18n.t('errors.notFound').replace('{{model}}', 'Cupón'),
+        );
+      }
+
+      if (coupon.expiresAt < new Date()) {
+        throw new ConflictException(this.i18n.t('errors.CouponExpired'));
+      }
+
+      if (coupon.type === CouponType.EXCHANGE_POINT) {
+        const userCoupon = await this.prisma.userCoupon.findFirst({
+          where: {
+            userId,
+            couponId: coupon.id,
+            enabled: true,
+          },
+        });
+
+        if (!userCoupon) {
+          throw new ConflictException(this.i18n.t('errors.CouponNotAssigned'));
+        }
+      }
+    }
+
     const existCartActiveByUser = await this.get({
       where: { user: { id: userId }, status: CartStatus.ACTIVE },
     });
 
     if (existCartActiveByUser) {
       throw new ConflictException(
-        this.i18n.t('errors.conflict', { args: { model: 'Cart' } }),
+        this.i18n.t('errors.conflict').replace('{{model}}', 'Cart'),
       );
     }
 
@@ -85,7 +104,11 @@ export class CartsService {
         id: true,
         stock: true,
         product: {
-          select: { name: true },
+          select: {
+            id: true,
+            price: true,
+            name: true,
+          },
         },
       },
     });
@@ -109,17 +132,31 @@ export class CartsService {
       };
     }
 
+    const couponPercentage = 0;
+    console.log(couponPercentage);
+
     const data: Prisma.CartCreateInput = {
       user: { connect: { id: userId } },
-      ...(body.couponId
-        ? { coupon: { connect: { id: body.couponId } } }
-        : undefined),
+      ...(body.couponCode && {
+        coupon: { connect: { code: body.couponCode } },
+      }),
       items: {
-        create: validItems.map((item) => ({
-          quantity: item.quantity,
-          product: { connect: { id: item.productId } },
-          variant: { connect: { id: item.variantId } },
-        })),
+        create: validItems.map((item) => {
+          const variant = variants.find((v) => v.id === item.variantId);
+          const product = variant!.product;
+          const unitPrice = product.price;
+          const discount = +(unitPrice * (couponPercentage / 100)).toFixed(2);
+          const finalPrice = +(unitPrice - discount).toFixed(2);
+
+          return {
+            unitPrice,
+            discount,
+            finalPrice,
+            quantity: item.quantity,
+            product: { connect: { id: product.id } },
+            variant: { connect: { id: item.variantId } },
+          };
+        }),
       },
     };
 
@@ -129,15 +166,15 @@ export class CartsService {
       return {
         cart,
         error: notAdded.length
-          ? this.i18n.t('errors.stockUnavailable', {
-              args: { items: notAdded.join(', ') },
-            })
+          ? this.i18n
+              .t('errors.stockUnavailable')
+              .replace('{{items}}', notAdded.join(', '))
           : '',
       };
     } catch (e) {
       if (e.code === 'P2002') {
         throw new ConflictException(
-          this.i18n.t('errors.conflict', { args: { model: 'Cart' } }),
+          this.i18n.t('errors.conflict').replace('{{model}}', 'Cart'),
         );
       }
       throw e;
@@ -160,12 +197,12 @@ export class CartsService {
   async update(id: string, dto: UpdateCartDto, userId: string) {
     const existingCart = await this.cart.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, coupon: true },
     });
 
     if (!existingCart || existingCart.userId !== userId) {
       throw new NotFoundException(
-        this.i18n.t('notFound', { args: { model: 'Cart' } }),
+        (this.i18n.t('notFound') as string).replace('{{model}}', 'Cart'),
       );
     }
 
@@ -195,12 +232,8 @@ export class CartsService {
         where: {
           id: { in: itemsToAdd.map((item) => item.variantId) },
         },
-        select: {
-          id: true,
-          stock: true,
-          product: {
-            select: { name: true },
-          },
+        include: {
+          product: true,
         },
       });
 
@@ -212,9 +245,18 @@ export class CartsService {
           continue;
         }
 
+        const unitPrice = variant.product.price;
+        const discount = existingCart.coupon
+          ? +(unitPrice * (existingCart.coupon.value / 100)).toFixed(2)
+          : 0;
+        const finalPrice = +(unitPrice - discount).toFixed(2);
+
         await this.cartItem.create({
           data: {
             quantity: item.quantity,
+            unitPrice,
+            discount,
+            finalPrice,
             cart: { connect: { id } },
             product: { connect: { id: item.productId } },
             variant: { connect: { id: item.variantId } },
@@ -229,9 +271,10 @@ export class CartsService {
         include: { items: true },
       }),
       error: notAdded.length
-        ? this.i18n.t('errors.stockUnavailable', {
-            args: { items: notAdded.join(', ') },
-          })
+        ? (this.i18n.t('errors.stockUnavailable') as string).replace(
+            '{{items}}',
+            notAdded.join(', '),
+          )
         : '',
     };
   }
@@ -320,36 +363,5 @@ export class CartsService {
         data: { status: CartStatus.EXPIRED },
       });
     }
-  }
-
-  parseCartWithDiscount(cart: RawCart): ParsedCart {
-    const couponPercentage = cart.coupon?.value ?? 0;
-
-    const items = cart.items.map((item) => {
-      const unitPrice = item.product.price;
-      const discount = +(unitPrice * (couponPercentage / 100)).toFixed(2);
-      const finalPrice = +(unitPrice - discount).toFixed(2);
-
-      const productWithDiscount: ProductItemCart = {
-        ...item.product,
-        finalPrice,
-        couponPercentage,
-      };
-
-      return {
-        id: item.id,
-        quantity: item.quantity,
-        product: {
-          ...productWithDiscount,
-          variant: item.variant,
-        },
-      };
-    });
-
-    return {
-      id: cart.id,
-      coupon: cart.coupon ?? null,
-      items,
-    };
   }
 }

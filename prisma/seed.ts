@@ -58,7 +58,7 @@ async function main() {
       data: {
         name: `${category.name} Producto ${i}`,
         description: faker.commerce.productDescription(),
-        price: parseFloat(faker.commerce.price({ min: 5000, max: 20000 })),
+        price: parseFloat(faker.commerce.price({ min: 500, max: 2000 })),
         isService: false,
         isActive: true,
         hasDelivery: true,
@@ -110,11 +110,24 @@ async function main() {
     allCoupons.push(coupon);
   }
 
+  for (let i = 1; i <= 2; i++) {
+    await prisma.coupon.create({
+      data: {
+        description: `Cupón Promotion${i}`,
+        value: faker.number.int({ min: 5, max: 50 }),
+        price: faker.number.int({ min: 50, max: 300 }),
+        code: `CUPON-PROMO${i}`,
+        status: 'ACTIVE',
+        type: 'PROMOTION',
+        expiresAt: faker.date.soon({ days: 60 }),
+      },
+    });
+  }
   // Crear usuarios clientes y asociar cupones
   for (let i = 1; i <= 3; i++) {
     const user = await prisma.user.create({
       data: {
-        email: `amaayaagustin.2395+${i}@gmail.com`,
+        email: `amayaagustin.2395+${i}@gmail.com`,
         password,
         role: 'CLIENT',
         points: faker.number.int({ min: 300, max: 500 }),

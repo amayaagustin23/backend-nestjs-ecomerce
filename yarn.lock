@@ -7310,7 +7310,7 @@ neo-async@^2.6.2:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-nestjs-i18n@^10.4.0:
+nestjs-i18n@^10.5.1:
   version "10.5.1"
   resolved "https://registry.yarnpkg.com/nestjs-i18n/-/nestjs-i18n-10.5.1.tgz#d8400c64edeb0541d3b081bb02bc8d5263c295c2"
   integrity sha512-cJJFz+RUfav23QACpGCq1pdXNLYC3tBesrP14RGoE/YYcD4xosQPX2eyjvDNuo0Ti63Xtn6j57wDNEUKrZqmSw==

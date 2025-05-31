@@ -4,6 +4,7 @@ import {
   IsArray,
   IsInt,
   IsOptional,
+  IsString,
   IsUUID,
   Min,
   ValidateNested,
@@ -36,8 +37,8 @@ export class CreateCartDto {
 
   @ApiProperty()
   @IsOptional()
-  @IsUUID()
-  couponId: string;
+  @IsString()
+  couponCode: string;
 }
 export class UpdateCartItemQuantityDto {
   @ApiProperty()

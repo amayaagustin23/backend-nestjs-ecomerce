@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Address, Person, Prisma, Role, User } from '@prisma/client';
@@ -69,7 +71,7 @@ export class UsersService {
 
     if (existingActiveUser) {
       throw new ConflictException(
-        this.i18n.t('errors.conflict', { args: { model: 'User' } }),
+        this.i18n.t('errors.conflict').replace('{{model}}', 'User'),
       );
     }
 
@@ -104,7 +106,7 @@ export class UsersService {
       .catch((e) => {
         if (e.code === 'P2002') {
           throw new ConflictException(
-            this.i18n.t('errors.conflict', { args: { model: 'User' } }),
+            this.i18n.t('errors.conflict').replace('{{model}}', 'User'),
           );
         }
         throw e;
@@ -168,7 +170,7 @@ export class UsersService {
 
     if (!findUser) {
       throw new ForbiddenException(
-        this.i18n.t('errors.notFound', { args: { model: 'User' } }),
+        this.i18n.t('errors.notFound').replace('{{model}}', 'User'),
       );
     }
 
@@ -191,7 +193,7 @@ export class UsersService {
       });
       if (existingEmailUser) {
         throw new ConflictException(
-          this.i18n.t('errors.conflict', { args: { model: 'User' } }),
+          this.i18n.t('errors.conflict').replace('{{model}}', 'User'),
         );
       }
     }
@@ -248,22 +250,60 @@ export class UsersService {
     });
   }
 
-  async exchangeCoupon(id: string, userId: string) {
-    const { points } = await this.getRaw({ where: { id: userId } });
-    const { price } = await this.prisma.coupon.findUnique({ where: { id } });
-    if (points > 0 && points >= price) {
-      await this.prisma.userCoupon.create({
-        data: {
-          user: { connect: { id: userId } },
-          coupon: { connect: { id } },
-        },
-      });
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { points: { decrement: price } },
-      });
-      return await this.getRaw({ where: { id: userId } });
+  async exchangeCoupon(code: string, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { points: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(
+        this.i18n.t('errors.notFound').replace('{{model}}', 'Usuario'),
+      );
     }
+
+    const coupon = await this.prisma.coupon.findFirst({ where: { code } });
+
+    if (!coupon) {
+      throw new NotFoundException(
+        this.i18n.t('errors.notFound').replace('{{model}}', 'Cupón'),
+      );
+    }
+
+    const alreadyClaimed = await this.prisma.userCoupon.findFirst({
+      where: { userId, couponId: coupon.id },
+    });
+
+    if (alreadyClaimed) {
+      throw new ConflictException(this.i18n.t('errors.couponAlreadyClaimed'));
+    }
+
+    if (coupon.expiresAt < new Date()) {
+      throw new BadRequestException(this.i18n.t('errors.couponExpired'));
+    }
+
+    if (user.points < coupon.price) {
+      const message = this.i18n
+        .t('errors.insufficientPoints')
+        .replace('{{required}}', String(coupon.price))
+        .replace('{{available}}', String(user.points));
+
+      throw new BadRequestException(message);
+    }
+
+    await this.prisma.userCoupon.create({
+      data: {
+        user: { connect: { id: userId } },
+        coupon: { connect: { id: coupon.id } },
+      },
+    });
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { points: { decrement: coupon.price } },
+    });
+
+    return await this.getRaw({ where: { id: userId } });
   }
 
   async mapToBasicUserInfoFromUser(

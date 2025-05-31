@@ -55,6 +55,7 @@ export type I18nTranslations = {
             "samePassword": string;
             "requiredField": string;
             "passwordComparison": string;
+            "cartEmpty": string;
         };
         "notFound": string;
         "conflict": string;
@@ -73,6 +74,11 @@ export type I18nTranslations = {
             "processingError": string;
         };
         "stockUnavailable": string;
+        "CouponDisabled": string;
+        "CouponDisabledPromotion": string;
+        "couponAlreadyClaimed": string;
+        "couponExpired": string;
+        "insufficientPoints": string;
     };
     "translations": {
         "welcome": string;

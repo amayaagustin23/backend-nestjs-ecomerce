@@ -26,6 +26,11 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      // ⬇️ ¡Este `validationError` es CLAVE para mostrar los mensajes como esperás!
+      validationError: {
+        target: false,
+        value: false,
+      },
     }),
     new ValidationPipe({
       whitelist: true,
@@ -33,6 +38,26 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+  app.useGlobalPipes(
+    new I18nValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      validationError: {
+        target: false,
+        value: false,
+      },
+    }),
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+
   app.useGlobalFilters(new ValidationErrorExceptionFilter());
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector), {

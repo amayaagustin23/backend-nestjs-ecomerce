@@ -24,6 +24,7 @@ export class OrdersService {
     this.order = prisma.order;
     this.payment = prisma.payment;
   }
+
   async createOrderFromCart(cartId: string, userId: string) {
     const cart = await this.cart.findUnique({
       where: { id: cartId },
@@ -40,13 +41,16 @@ export class OrdersService {
 
     if (!cart) {
       throw new NotFoundException(
-        this.i18n.t('errors.notFound', { args: { model: 'Carrito' } }),
+        (this.i18n.t('errors.notFound') as string).replace(
+          '{{model}}',
+          'Carrito',
+        ),
       );
     }
 
     if (cart.items.length === 0) {
       throw new BadRequestException(
-        this.i18n.t('errors.validations.cartEmpty'),
+        this.i18n.t('errors.validations.cartEmpty') as string,
       );
     }
 
@@ -56,12 +60,10 @@ export class OrdersService {
 
     if (validItems.length === 0) {
       throw new BadRequestException(
-        this.i18n
-          .t('errors.stockUnavailable')
-          .replace(
-            '{{items}}',
-            cart.items.map((item) => item.product.name).join(', '),
-          ),
+        (this.i18n.t('errors.stockUnavailable') as string).replace(
+          '{{items}}',
+          cart.items.map((item) => item.product.name).join(', '),
+        ),
       );
     }
 
@@ -69,19 +71,21 @@ export class OrdersService {
 
     const orderItems = validItems.map((item) => {
       const unitPrice = item.product.price;
-      const discount = unitPrice * (couponPercentage / 100);
+      const discount = +(unitPrice * (couponPercentage / 100)).toFixed(2);
       const finalPrice = +(unitPrice - discount).toFixed(2);
 
       return {
         quantity: item.quantity,
-        unitPrice: finalPrice,
+        unitPrice,
+        discount,
+        finalPrice,
         product: { connect: { id: item.productId } },
         variant: { connect: { id: item.variantId } },
       };
     });
 
     const subtotal = orderItems.reduce(
-      (acc, item) => acc + item.unitPrice * item.quantity,
+      (acc, item) => acc + item.finalPrice * item.quantity,
       0,
     );
 
@@ -90,6 +94,9 @@ export class OrdersService {
 
     const order = await this.order.create({
       data: {
+        ...(cart.couponId
+          ? { coupon: { connect: { id: cart.couponId } } }
+          : undefined),
         user: { connect: { id: userId } },
         items: { create: orderItems },
         subtotal,
@@ -139,8 +146,11 @@ export class OrdersService {
     return `This action returns all orders`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
+  async findOne(id: string) {
+    return await this.order.findUnique({
+      where: { id },
+      include: { items: { include: { product: true, variant: true } } },
+    });
   }
 
   remove(id: number) {
