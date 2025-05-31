@@ -7,6 +7,11 @@ import { Cron } from '@nestjs/schedule';
 import { CartStatus, Prisma } from '@prisma/client';
 import * as moment from 'moment';
 import { I18nService } from 'nestjs-i18n';
+import {
+  ParsedCart,
+  ProductItemCart,
+  RawCart,
+} from 'src/common/interfaces/index.interface';
 import { MessagingService } from 'src/services/messaging/messaging.service';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { CreateCartDto, UpdateCartDto } from './dto/carts.dto';
@@ -32,15 +37,28 @@ export class CartsService {
     input.where = {
       ...input.where,
     };
-    input.include = { items: { include: { product: true, variant: true } } };
-    return this.cart.findUnique<T>(input);
+    input.include = {
+      coupon: true,
+      items: { include: { product: true, variant: true } },
+    };
+
+    const cart = await this.cart.findUnique(input);
+
+    if (!cart) {
+      throw new Error('Carrito no encontrado');
+    }
+
+    return this.parseCartWithDiscount(cart as any);
   }
 
   async get(input: { where: Prisma.CartWhereInput }) {
     const { where } = input;
     const cart = await this.cart.findFirst({
       where: { ...where },
-      include: { items: { include: { product: true, variant: true } } },
+      include: {
+        coupon: true,
+        items: { include: { product: true, variant: true } },
+      },
     });
     if (!cart) return undefined;
     return cart;
@@ -93,6 +111,9 @@ export class CartsService {
 
     const data: Prisma.CartCreateInput = {
       user: { connect: { id: userId } },
+      ...(body.couponId
+        ? { coupon: { connect: { id: body.couponId } } }
+        : undefined),
       items: {
         create: validItems.map((item) => ({
           quantity: item.quantity,
@@ -129,7 +150,10 @@ export class CartsService {
     };
     return await this.cart.findMany({
       where,
-      include: { items: { include: { product: true, variant: true } } },
+      include: {
+        coupon: true,
+        items: { include: { product: true, variant: true } },
+      },
     });
   }
 
@@ -296,5 +320,36 @@ export class CartsService {
         data: { status: CartStatus.EXPIRED },
       });
     }
+  }
+
+  parseCartWithDiscount(cart: RawCart): ParsedCart {
+    const couponPercentage = cart.coupon?.value ?? 0;
+
+    const items = cart.items.map((item) => {
+      const unitPrice = item.product.price;
+      const discount = +(unitPrice * (couponPercentage / 100)).toFixed(2);
+      const finalPrice = +(unitPrice - discount).toFixed(2);
+
+      const productWithDiscount: ProductItemCart = {
+        ...item.product,
+        finalPrice,
+        couponPercentage,
+      };
+
+      return {
+        id: item.id,
+        quantity: item.quantity,
+        product: {
+          ...productWithDiscount,
+          variant: item.variant,
+        },
+      };
+    });
+
+    return {
+      id: cart.id,
+      coupon: cart.coupon ?? null,
+      items,
+    };
   }
 }

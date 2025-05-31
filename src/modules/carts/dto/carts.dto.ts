@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsUUID, Min, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateCartItemDto {
   @ApiProperty({ example: 'product-uuid' })
@@ -26,6 +33,11 @@ export class CreateCartDto {
   @ValidateNested({ each: true })
   @Type(() => CreateCartItemDto)
   items: CreateCartItemDto[];
+
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
+  couponId: string;
 }
 export class UpdateCartItemQuantityDto {
   @ApiProperty()

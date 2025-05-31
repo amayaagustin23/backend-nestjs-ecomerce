@@ -70,20 +70,31 @@ enum CartStatus {
   CANCELLED
 }
 
+enum CouponStatus {
+  ACTIVE
+  EXPIRED
+  REDEEMED
+}
+
+
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String       @id @default(uuid())
+  email     String       @unique
   password  String
-  role      Role     @default(CLIENT)
+  role      Role         @default(CLIENT)
   person    Person?
   orders    Order[]
   payments  Payment[]
   carts     Cart[]
   addresses Address[]
-  createdAt DateTime @default(now())
-  isDeleted Boolean @default(false)
+  coupons   UserCoupon[]
+  points    Int          @default(0)
+  createdAt DateTime     @default(now())
+  isDeleted Boolean      @default(false)
 }
+
+
 
 model Person {
   id        String   @id @default(uuid())
@@ -100,7 +111,9 @@ model Address {
   city      String
   province  String
   postalCode String
-  isDefault Boolean  @default(false)
+  isDefault Boolean  @default(true)
+  lat       Float?
+  lng       Float?
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   shippingInfos ShippingInfo[]
@@ -170,6 +183,30 @@ model EcommerceConfig {
   createdAt     DateTime @default(now())
 }
 
+model Coupon {
+  id          String        @id @default(uuid())
+  description String
+  value       Int
+  price       Int
+  code        String        @unique
+  status      CouponStatus  @default(ACTIVE)
+  expiresAt   DateTime
+  users       UserCoupon[]  
+  cart        Cart?
+  createdAt   DateTime      @default(now())
+}
+
+model UserCoupon {
+  userId   String
+  couponId String
+  assignedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  @@id([userId, couponId]) 
+}
+
 model Cart {
   id        String     @id @default(uuid())
   status    CartStatus @default(ACTIVE)
@@ -177,6 +214,8 @@ model Cart {
   user      User       @relation(fields: [userId], references: [id])
   items     CartItem[]
   createdAt DateTime   @default(now())
+  couponId  String?    @unique 
+  coupon    Coupon?    @relation(fields: [couponId], references: [id])
 }
 
 model CartItem {

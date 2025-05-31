@@ -7,62 +7,14 @@ const prisma = new PrismaClient();
 async function main() {
   const password = await hash('Pass1234', 10);
 
+  // Crear marcas
   await prisma.brand.createMany({
     data: [{ name: 'Nike' }, { name: 'Adidas' }, { name: 'Puma' }],
   });
 
   const brandList = await prisma.brand.findMany();
 
-  await prisma.user.create({
-    data: {
-      email: 'admin@demo.com',
-      password,
-      role: 'ADMIN',
-      person: {
-        create: {
-          name: 'Admin Demo',
-          phone: faker.phone.number(),
-          cuitOrDni: '20222222223',
-        },
-      },
-    },
-  });
-
-  for (let i = 1; i <= 3; i++) {
-    await prisma.user.create({
-      data: {
-        email: `cliente${i}@demo.com`,
-        password,
-        role: 'CLIENT',
-        person: {
-          create: {
-            name: `Cliente ${i}`,
-            phone: faker.phone.number(),
-            cuitOrDni: faker.string.numeric(11),
-          },
-        },
-        addresses: {
-          create: [
-            {
-              street: faker.location.streetAddress(),
-              city: 'San Miguel de Tucumán',
-              province: 'Tucumán',
-              postalCode: '4000',
-              isDefault: true,
-            },
-            {
-              street: faker.location.streetAddress(),
-              city: 'Yerba Buena',
-              province: 'Tucumán',
-              postalCode: '4107',
-              isDefault: false,
-            },
-          ],
-        },
-      },
-    });
-  }
-
+  // Crear categorías padre
   await prisma.category.createMany({
     data: [
       { name: 'Remeras', description: 'Ropa superior básica' },
@@ -71,6 +23,7 @@ async function main() {
     ],
   });
 
+  // Crear subcategorías
   const allParentCategories = await prisma.category.findMany({
     where: { parentId: null },
   });
@@ -93,10 +46,10 @@ async function main() {
   }
 
   const categories = await prisma.category.findMany();
-
   const sizes = ['M', 'L', 'XL'];
   const colors = ['Negro'];
 
+  // Crear productos y variantes
   for (let i = 1; i <= 15; i++) {
     const category = categories[i % categories.length];
     const brand = brandList[i % brandList.length];
@@ -114,7 +67,9 @@ async function main() {
         images: {
           create: [
             {
-              url: `https://via.placeholder.com/500x500.png?text=${encodeURIComponent(category.name)}+${i}`,
+              url: `https://via.placeholder.com/500x500.png?text=${encodeURIComponent(
+                category.name,
+              )}+${i}`,
               description: `Imagen del producto ${i}`,
               order: 1,
             },
@@ -137,8 +92,69 @@ async function main() {
     }
   }
 
+  // Crear cupones
+  const allCoupons = [];
+
+  for (let i = 1; i <= 5; i++) {
+    const coupon = await prisma.coupon.create({
+      data: {
+        description: `Cupón global ${i}`,
+        value: faker.number.int({ min: 5, max: 50 }),
+        price: faker.number.int({ min: 50, max: 300 }),
+        code: `CUPON${i}`,
+        status: 'ACTIVE',
+        expiresAt: faker.date.soon({ days: 30 }),
+      },
+    });
+
+    allCoupons.push(coupon);
+  }
+
+  // Crear usuarios clientes y asociar cupones
+  for (let i = 1; i <= 3; i++) {
+    const user = await prisma.user.create({
+      data: {
+        email: `amaayaagustin.2395+${i}@gmail.com`,
+        password,
+        role: 'CLIENT',
+        points: faker.number.int({ min: 300, max: 500 }),
+        person: {
+          create: {
+            name: `Cliente ${i}`,
+            phone: faker.phone.number(),
+            cuitOrDni: faker.string.numeric(11),
+          },
+        },
+        addresses: {
+          create: [
+            {
+              street: faker.location.streetAddress(),
+              city: 'San Miguel de Tucumán',
+              province: 'Tucumán',
+              postalCode: '4000',
+              isDefault: true,
+            },
+          ],
+        },
+      },
+    });
+
+    // Asignar entre 1 y 3 cupones aleatorios a cada usuario
+    const couponCount = faker.number.int({ min: 1, max: 3 });
+    const randomCoupons = faker.helpers.arrayElements(allCoupons, couponCount);
+
+    for (const coupon of randomCoupons) {
+      await prisma.userCoupon.create({
+        data: {
+          userId: user.id,
+          couponId: coupon.id,
+        },
+      });
+    }
+  }
+
   console.log(
-    '✅ Seed generado con marcas, usuarios, direcciones, categorías y productos con variantes.',
+    '🎉 Seed completado con relación muchos a muchos entre usuarios y cupones.',
   );
 }
 

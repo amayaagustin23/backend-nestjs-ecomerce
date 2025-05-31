@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { Role } from 'src/constants';
@@ -58,6 +59,32 @@ export class UsersController {
     @Body() data: UpdateUserDto,
   ) {
     return this.usersService.updateUser(id, data);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address-default/:id')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  addressDefaultUpdate(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.addressDefaultUpdate(id, userId);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('exchange-coupon/:id')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  exchangeCoupon(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.exchangeCoupon(id, userId);
   }
 
   @HasRoles(Role.SUPERADMIN, Role.ADMIN)

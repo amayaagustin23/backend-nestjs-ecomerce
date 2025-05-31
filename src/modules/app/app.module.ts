@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { envValidationSchema } from 'src/config/envs/env-validation';
 import I18nModuleConfig from 'src/config/i18n/i18n.config';
 import { UploadModule } from 'src/services/aws/aws.module';
+import { GooglePlacesModule } from 'src/services/google-places/google-places.module';
 import { PrismaModule } from '../../services/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { BrandsModule } from '../brands/brands.module';
@@ -33,6 +34,7 @@ import { AppService } from './app.service';
     CartsModule,
     OrdersModule,
     PaymentsModule,
+    GooglePlacesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

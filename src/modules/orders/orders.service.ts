@@ -28,6 +28,7 @@ export class OrdersService {
     const cart = await this.cart.findUnique({
       where: { id: cartId },
       include: {
+        coupon: true,
         items: {
           include: {
             product: true,
@@ -64,15 +65,23 @@ export class OrdersService {
       );
     }
 
-    const orderItems = validItems.map((item) => ({
-      quantity: item.quantity,
-      unitPrice: item.product.price,
-      product: { connect: { id: item.productId } },
-      variant: { connect: { id: item.variantId } },
-    }));
+    const couponPercentage = cart.coupon?.value ?? 0;
 
-    const subtotal = validItems.reduce(
-      (acc, item) => acc + item.product.price * item.quantity,
+    const orderItems = validItems.map((item) => {
+      const unitPrice = item.product.price;
+      const discount = unitPrice * (couponPercentage / 100);
+      const finalPrice = +(unitPrice - discount).toFixed(2);
+
+      return {
+        quantity: item.quantity,
+        unitPrice: finalPrice,
+        product: { connect: { id: item.productId } },
+        variant: { connect: { id: item.variantId } },
+      };
+    });
+
+    const subtotal = orderItems.reduce(
+      (acc, item) => acc + item.unitPrice * item.quantity,
       0,
     );
 
@@ -101,6 +110,7 @@ export class OrdersService {
         total,
         subtotal,
         shippingCost,
+        couponValue: couponPercentage,
       },
     });
 

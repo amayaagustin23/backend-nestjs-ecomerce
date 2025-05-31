@@ -4,7 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Person, Prisma, Role, User } from '@prisma/client';
+import { Address, Person, Prisma, Role, User } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { BasicUserInfo } from 'src/common/interfaces/index.interface';
 import { paginatePrisma } from 'src/common/pagination';
@@ -56,7 +56,7 @@ export class UsersService {
   async registerUserClient(
     body: RegisterUserDto,
   ): Promise<Partial<BasicUserInfo>> {
-    const { email, password, person } = body;
+    const { email, password, person, address } = body;
 
     const passwordHashed = await hashPassword(password);
 
@@ -73,6 +73,9 @@ export class UsersService {
       );
     }
 
+    const addressIsComplete =
+      address?.street && address.city && address.province && address.postalCode;
+
     const user = await this.user
       .create({
         data: {
@@ -81,8 +84,22 @@ export class UsersService {
           person: {
             create: { ...person },
           },
+          ...(addressIsComplete
+            ? {
+                addresses: {
+                  create: {
+                    street: address.street,
+                    city: address.city,
+                    province: address.province,
+                    postalCode: address.postalCode,
+                    lat: address.lat ?? 0,
+                    lng: address.lng ?? 0,
+                  },
+                },
+              }
+            : {}),
         },
-        include: { person: true },
+        include: { person: true, addresses: true },
       })
       .catch((e) => {
         if (e.code === 'P2002') {
@@ -146,7 +163,7 @@ export class UsersService {
   async getUserById(id: string): Promise<Partial<BasicUserInfo>> {
     const findUser = await this.getRaw({
       where: { id },
-      include: { person: true },
+      include: { person: true, addresses: true },
     });
 
     if (!findUser) {
@@ -220,11 +237,42 @@ export class UsersService {
     return updatedUserPassword;
   }
 
+  async addressDefaultUpdate(id: string, userId: string) {
+    await this.prisma.address.updateMany({
+      where: { userId },
+      data: { isDefault: false },
+    });
+    await this.prisma.address.update({
+      where: { id },
+      data: { isDefault: true },
+    });
+  }
+
+  async exchangeCoupon(id: string, userId: string) {
+    const { points } = await this.getRaw({ where: { id: userId } });
+    const { price } = await this.prisma.coupon.findUnique({ where: { id } });
+    if (points > 0 && points >= price) {
+      await this.prisma.userCoupon.create({
+        data: {
+          user: { connect: { id: userId } },
+          coupon: { connect: { id } },
+        },
+      });
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { points: { decrement: price } },
+      });
+      return await this.getRaw({ where: { id: userId } });
+    }
+  }
+
   async mapToBasicUserInfoFromUser(
-    user: Partial<User> & { person?: Person },
+    user: Partial<User> & { person?: Person; addresses?: Address[] },
   ): Promise<Partial<BasicUserInfo>> {
     if (!user) return {};
-    const { id, email, role, person } = user;
+
+    const { id, email, role, person, addresses } = user;
+
     return {
       id,
       email,
@@ -232,6 +280,7 @@ export class UsersService {
       name: person?.name,
       phone: person?.phone,
       cuitOrDni: person?.cuitOrDni,
+      addresses,
     };
   }
 }

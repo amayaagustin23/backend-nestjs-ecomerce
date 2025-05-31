@@ -23,9 +23,9 @@ export class MessagingService {
     const { from, to, user } = input;
 
     const subject = await this.i18n.t('emails.registerEmail.subject');
-    const body = await this.i18n.t('emails.registerEmail.body', {
-      args: { name: user.name },
-    });
+    const body = await this.i18n
+      .t('emails.registerEmail.body')
+      .replace('{{name}}', user.name);
 
     await this.emailService.send({
       from,
@@ -55,9 +55,9 @@ export class MessagingService {
   }) {
     const { from, to, redirectUrl } = input;
     const subject = this.i18n.t('emails.recoverPassword.subject');
-    const body = this.i18n.t('emails.recoverPassword.body', {
-      args: { redirectUrl },
-    });
+    const body = this.i18n
+      .t('emails.recoverPassword.body')
+      .replace('{{redirectUrl}}', redirectUrl);
 
     await this.emailService.send({
       from,
@@ -74,16 +74,14 @@ export class MessagingService {
   }) {
     const { from, to, user } = input;
 
-    const subject = await this.i18n.t('emails.notificationCartActive.subject', {
-      args: { name: user.person?.name || user.email },
-    });
+    const subject = await this.i18n
+      .t('emails.notificationCartActive.subject')
+      .replace('{{name}}', user.person.name);
 
-    const body = await this.i18n.t('emails.notificationCartActive.body', {
-      args: {
-        name: user.person?.name || user.email,
-        email: user.email,
-      },
-    });
+    const body = await this.i18n
+      .t('emails.notificationCartActive.body')
+      .replace('{{name}}', user.person.name)
+      .replace('{{email}}', user.email);
 
     await this.emailService.send({
       from,
@@ -103,10 +101,9 @@ export class MessagingService {
     const { status, from, to, user, order } = input;
     const name = user.person?.name || user.email;
 
-    const subject = await this.i18n.t(
-      `emails.payment${capitalize(status)}.subject`,
-      { args: { name } },
-    );
+    const subject = await this.i18n
+      .t(`emails.payment${capitalize(status)}.subject`)
+      .replace('{{name}}', user.person.name);
 
     const itemsList = order?.items
       .map(
