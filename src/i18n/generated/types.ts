@@ -73,6 +73,9 @@ export type I18nTranslations = {
             "ignoredStatus": string;
             "processingError": string;
         };
+        "carts": {
+            "cartOrdered": string;
+        };
         "stockUnavailable": string;
         "CouponDisabled": string;
         "CouponDisabledPromotion": string;

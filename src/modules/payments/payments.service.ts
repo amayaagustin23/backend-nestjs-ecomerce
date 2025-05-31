@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CartStatus, OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import {
+  CartStatus,
+  CouponType,
+  OrderStatus,
+  PaymentStatus,
+  Prisma,
+} from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { MercadopagoService } from 'src/services/mercadopago/mercadopago.service';
 import { MessagingService } from 'src/services/messaging/messaging.service';
@@ -54,6 +60,7 @@ export class PaymentsService {
 
       const cart = await this.cart.findFirst({
         where: { userId: order.userId, status: CartStatus.ACTIVE },
+        include: { coupon: true, user: true },
       });
       await this.messagingService.sendPaymentStatusEmail({
         status: payment.status,
@@ -66,6 +73,27 @@ export class PaymentsService {
       switch (payment.status) {
         case 'approved': {
           if (cart) {
+            if (cart.coupon) {
+              const userCouponFound = await this.prisma.userCoupon.findFirst({
+                where: { couponId: cart.couponId, userId: cart.userId },
+              });
+              if (userCouponFound) {
+                await this.prisma.userCoupon.updateMany({
+                  where: { couponId: cart.couponId, userId: cart.userId },
+                  data: { enabled: false },
+                });
+              } else {
+                if (cart.coupon && cart.coupon.type === CouponType.PROMOTION) {
+                  await this.prisma.userCoupon.create({
+                    data: {
+                      user: { connect: { id: cart.userId } },
+                      coupon: { connect: { id: cart.couponId } },
+                      enabled: false,
+                    },
+                  });
+                }
+              }
+            }
             await this.cart.update({
               where: { id: cart.id },
               data: { status: CartStatus.ORDERED },
@@ -105,9 +133,10 @@ export class PaymentsService {
               data: { stock: { decrement: quantity } },
             });
           }
+          const points = cart.user.points + order.total * 0.05;
           await this.prisma.user.update({
-            where: { id: cart.userId },
-            data: { points: { increment: order.total * 0.05 } },
+            where: { id: order.userId },
+            data: { points },
           });
           return {
             message: this.i18n.t('errors.payments.successfullyProcessed'),

@@ -3,7 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import {
+  CartStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Prisma,
+} from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { MercadopagoService } from 'src/services/mercadopago/mercadopago.service';
 import { MessagingService } from 'src/services/messaging/messaging.service';
@@ -19,6 +25,7 @@ export class OrdersService {
     private readonly i18n: I18nService,
     private readonly messagingService: MessagingService,
     private readonly mercadopagoService: MercadopagoService,
+    private readonly configService: ConfigService,
   ) {
     this.cart = prisma.cart;
     this.order = prisma.order;
@@ -27,7 +34,7 @@ export class OrdersService {
 
   async createOrderFromCart(cartId: string, userId: string) {
     const cart = await this.cart.findUnique({
-      where: { id: cartId },
+      where: { id: cartId, status: CartStatus.ACTIVE },
       include: {
         coupon: true,
         items: {
@@ -40,12 +47,7 @@ export class OrdersService {
     });
 
     if (!cart) {
-      throw new NotFoundException(
-        (this.i18n.t('errors.notFound') as string).replace(
-          '{{model}}',
-          'Carrito',
-        ),
-      );
+      throw new NotFoundException(this.i18n.t('errors.carts.cartOrdered'));
     }
 
     if (cart.items.length === 0) {
@@ -104,6 +106,7 @@ export class OrdersService {
         total,
       },
       include: {
+        user: { include: { person: true } },
         items: { include: { product: true, variant: true } },
       },
     });
@@ -134,6 +137,14 @@ export class OrdersService {
         mpStatus: null,
         mpStatusDetail: null,
       },
+    });
+
+    await this.messagingService.sendPaymentStatusEmail({
+      status: 'pending',
+      from: this.configService.get<string>('EMAIL_SENDER'),
+      to: order.user.email,
+      user: order.user,
+      order,
     });
 
     return {

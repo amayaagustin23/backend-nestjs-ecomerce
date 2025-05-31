@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { CartStatus, CouponType, Prisma } from '@prisma/client';
+import { CartStatus, Prisma } from '@prisma/client';
 import * as moment from 'moment';
 import { I18nService } from 'nestjs-i18n';
 import { MessagingService } from 'src/services/messaging/messaging.service';
@@ -69,18 +69,16 @@ export class CartsService {
         throw new ConflictException(this.i18n.t('errors.CouponExpired'));
       }
 
-      if (coupon.type === CouponType.EXCHANGE_POINT) {
-        const userCoupon = await this.prisma.userCoupon.findFirst({
-          where: {
-            userId,
-            couponId: coupon.id,
-            enabled: true,
-          },
-        });
+      const userCoupon = await this.prisma.userCoupon.findFirst({
+        where: {
+          userId,
+          couponId: coupon.id,
+          enabled: true,
+        },
+      });
 
-        if (!userCoupon) {
-          throw new ConflictException(this.i18n.t('errors.CouponNotAssigned'));
-        }
+      if (!userCoupon) {
+        throw new ConflictException(this.i18n.t('errors.couponAlreadyClaimed'));
       }
     }
 
@@ -133,7 +131,6 @@ export class CartsService {
     }
 
     const couponPercentage = 0;
-    console.log(couponPercentage);
 
     const data: Prisma.CartCreateInput = {
       user: { connect: { id: userId } },

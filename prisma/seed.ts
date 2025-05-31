@@ -58,7 +58,7 @@ async function main() {
       data: {
         name: `${category.name} Producto ${i}`,
         description: faker.commerce.productDescription(),
-        price: parseFloat(faker.commerce.price({ min: 500, max: 2000 })),
+        price: parseFloat(faker.commerce.price({ min: 50, max: 200 })),
         isService: false,
         isActive: true,
         hasDelivery: true,

@@ -25,6 +25,9 @@
     "ignoredStatus": "Estado de pago ignorado: {{status}}",
     "processingError": "Error al procesar el webhook de Mercado Pago"
   },
+  "carts": {
+    "cartOrdered": "Ya se realizo una orden para este carrito"
+  },
   "notFound": "{model} no encontrado",
   "conflict": "{model} ya existe con algunos de los datos proporcionados",
   "forbidden": "No tienes permiso para realizar esta acción",

@@ -99,25 +99,41 @@ export class MessagingService {
     order?: OrderWithItems;
   }) {
     const { status, from, to, user, order } = input;
-    const name = user.person?.name || user.email;
+    const name = user.person?.name;
+    const email = user.email;
 
     const subject = await this.i18n
       .t(`emails.payment${capitalize(status)}.subject`)
       .replace('{{name}}', user.person.name);
 
     const itemsList = order?.items
-      .map(
-        (item) => `
-      <div>
-        <strong>${item.product.name}</strong> - Talle: ${item.variant.size}, Color: ${item.variant.color}<br/>
-        Cantidad: ${item.quantity} x ${formatARS(item.unitPrice)}
-      </div><br/>
-    `,
-      )
+      .map((item) => {
+        const hasDiscount = item.discount > 0;
+        const discountPercent = hasDiscount
+          ? Math.round((item.discount / (item.unitPrice + item.discount)) * 100)
+          : 0;
+
+        return `
+          <div>
+            <strong>${item.product.name}</strong> - Talle: ${item.variant.size}, Color: ${item.variant.color}<br/>
+            Cantidad: ${item.quantity} x 
+            ${
+              hasDiscount
+                ? `<span style="text-decoration: line-through; color: #999;">${formatARS(
+                    item.unitPrice,
+                  )}</span> 
+                   <strong>${formatARS(item.finalPrice)}</strong> 
+                   <span style="color: green;">(-${discountPercent}%)</span>`
+                : `<strong>${formatARS(item.finalPrice)}</strong>`
+            }
+          </div><br/>
+        `;
+      })
       .join('');
 
     const body = (await this.i18n.t(`emails.payment${capitalize(status)}.body`))
       .replace(/{{name}}/g, name)
+      .replace(/{{email}}/g, email)
       .replace(/{{orderId}}/g, order?.id ?? '')
       .replace(/{{subtotal}}/g, formatARS(order?.subtotal ?? 0))
       .replace(/{{shippingCost}}/g, formatARS(order?.shippingCost ?? 0))
