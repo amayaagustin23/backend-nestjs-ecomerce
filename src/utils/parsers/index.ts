@@ -27,3 +27,10 @@ export const formatARS = (value: number): string => {
     minimumFractionDigits: 2,
   });
 };
+
+export const parseSortBy = (value: string): Record<string, 'asc' | 'desc'> => {
+  if (value) {
+    const [field, direction] = value.split('_');
+    return { [field]: direction as 'asc' | 'desc' };
+  }
+};

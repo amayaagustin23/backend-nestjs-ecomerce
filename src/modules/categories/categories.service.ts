@@ -93,7 +93,7 @@ export class CategoriesService {
       include: { children: true },
     };
 
-    if (pagination.page && pagination.perPage) {
+    if (pagination) {
       const paginated = await paginatePrisma(
         this.category,
         prismaArgs,

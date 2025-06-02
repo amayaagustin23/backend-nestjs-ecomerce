@@ -133,8 +133,8 @@ model Product {
   hasDelivery     Boolean          @default(true)
   categoryId      String
   category        Category         @relation(fields: [categoryId], references: [id])
-  brandId      String
-  brand        Brand         @relation(fields: [brandId], references: [id])
+  brandId         String
+  brand           Brand         @relation(fields: [brandId], references: [id])
   images          ProductImage[]
   orderItems      OrderItem[]
   cartItems       CartItem[]

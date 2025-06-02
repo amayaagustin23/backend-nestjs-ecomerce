@@ -69,17 +69,20 @@ export class NewCartItemDto {
 export class UpdateCartDto {
   @ApiProperty({ type: [UpdateCartItemQuantityDto], required: false })
   @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => UpdateCartItemQuantityDto)
   itemsToUpdate?: UpdateCartItemQuantityDto[];
 
   @ApiProperty({ type: [NewCartItemDto], required: false })
   @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => NewCartItemDto)
   itemsToAdd?: NewCartItemDto[];
 
   @ApiProperty({ type: [String], required: false })
   @IsArray()
+  @IsOptional()
   itemsToDelete?: string[];
 }

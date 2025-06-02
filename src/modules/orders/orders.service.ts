@@ -153,18 +153,43 @@ export class OrdersService {
     };
   }
 
-  findAll() {
-    return `This action returns all orders`;
+  async findAll(id: string) {
+    return await this.order.findMany({
+      where: { user: { id } },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                images: true,
+                category: true,
+                brand: true,
+              },
+            },
+            variant: true,
+          },
+        },
+      },
+    });
   }
 
   async findOne(id: string) {
     return await this.order.findUnique({
       where: { id },
-      include: { items: { include: { product: true, variant: true } } },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                images: true,
+                category: true,
+                brand: true,
+              },
+            },
+            variant: true,
+          },
+        },
+      },
     });
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} order`;
   }
 }

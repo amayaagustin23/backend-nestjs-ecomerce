@@ -26,7 +26,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
-import { PaginationArgs } from 'src/common/pagination/pagination.interface';
+import { PaginationAndProductArgs } from 'src/common/pagination/pagination.interface';
 import { Role } from 'src/constants';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -55,20 +55,16 @@ export class ProductsController {
     return this.productsService.create(createProductDto, files?.files ?? []);
   }
 
-  @HasRoles(Role.SUPERADMIN, Role.ADMIN, Role.CLIENT)
-  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get()
   @ApiOperation({
     summary: 'Gets a paginated list of all products',
   })
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  getAllProducts(@Query() pagination: PaginationArgs) {
+  getAllProducts(@Query() pagination: PaginationAndProductArgs) {
     return this.productsService.getAllProducts(pagination);
   }
 
-  @HasRoles(Role.SUPERADMIN, Role.ADMIN, Role.CLIENT)
-  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get(':id')
   @ApiOperation({
     summary: 'Get a product',
@@ -93,5 +89,25 @@ export class ProductsController {
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     return this.productsService.updateProduct(id, body, files);
+  }
+
+  @Get('all/brands')
+  @ApiOperation({
+    summary: 'Gets all brands',
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  getAllBrands() {
+    return this.productsService.getAllBrands();
+  }
+
+  @Get('all/variants')
+  @ApiOperation({
+    summary: 'Gets all variants',
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  getAllVariants() {
+    return this.productsService.getAllVariants();
   }
 }

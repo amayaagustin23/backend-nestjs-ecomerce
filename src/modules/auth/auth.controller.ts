@@ -1,13 +1,19 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
+import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
+import { HasRoles } from 'src/common/decorators/has-roles.decorator';
+import { Role } from 'src/constants';
 import {
   RecoverPasswordDto,
   RegisterUserDto,
@@ -39,8 +45,11 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @HttpCode(HttpStatus.OK)
-  login(@Body() credentials: LoginDto) {
-    return this.authService.login(credentials);
+  login(
+    @Body() credentials: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.login(credentials, res);
   }
 
   @Post('recover-password')
@@ -61,5 +70,16 @@ export class AuthController {
   resetPassword(@Body() body: ResetPasswordDto, @Req() req) {
     const { userId } = req.user;
     return this.authService.resetPassword(userId, body);
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.CLIENT)
+  @Get('me')
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @HttpCode(HttpStatus.OK)
+  getMe(@GetCurrentUser('userId') userId: string) {
+    return this.authService.getMe(userId);
   }
 }

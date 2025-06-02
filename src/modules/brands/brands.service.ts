@@ -61,7 +61,7 @@ export class BrandsService {
       where,
     };
 
-    if (pagination.page && pagination.perPage) {
+    if (pagination.page && pagination.size) {
       return await paginatePrisma(this.brand, prismaArgs, pagination);
     } else {
       return await this.brand.findMany(prismaArgs);

@@ -23,8 +23,8 @@ export const paginatePrisma = async <
   args: Omit<Args, 'skip' | 'take'>,
   pagination: PaginationArgs,
 ): Promise<PaginationResult<T>> => {
-  const page = pagination?.page ? Number(pagination.page) : 1;
-  const size = pagination.perPage ? Number(pagination.perPage) : 10;
+  const page = Number(pagination?.page) || 1;
+  const size = Number(pagination?.size) || 10;
   const skip = (page - 1) * size;
   const take = size;
 

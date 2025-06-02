@@ -49,19 +49,6 @@ export class CartsController {
 
   @HasRoles(Role.CLIENT)
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Get('one/by-user')
-  @ApiOperation({ summary: 'Get one cart by User' })
-  @ApiResponse({
-    status: 201,
-    description: 'Get one cart by user successfully',
-  })
-  @HttpCode(HttpStatus.OK)
-  getCartByUser(@GetCurrentUser('userId') userId: string) {
-    return this.cartsService.get({ where: { userId } });
-  }
-
-  @HasRoles(Role.CLIENT)
-  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get one cart by id' })
   @ApiResponse({
@@ -82,8 +69,8 @@ export class CartsController {
     description: 'Get one cart by id successfully',
   })
   @HttpCode(HttpStatus.OK)
-  getAllByUser(@GetCurrentUser('userId') userId: string) {
-    return this.cartsService.getAllByUser(userId);
+  getCartByUser(@GetCurrentUser('userId') userId: string) {
+    return this.cartsService.getCartByUser(userId);
   }
 
   @HasRoles(Role.CLIENT)

@@ -178,15 +178,27 @@ export class CartsService {
     }
   }
 
-  async getAllByUser(userId: string) {
+  async getCartByUser(userId: string) {
     const where: Prisma.CartWhereInput = {
       userId,
+      status: CartStatus.ACTIVE,
     };
-    return await this.cart.findMany({
+    return await this.cart.findFirst({
       where,
       include: {
         coupon: true,
-        items: { include: { product: true, variant: true } },
+        items: {
+          include: {
+            product: {
+              include: {
+                images: true,
+                category: true,
+                brand: true,
+              },
+            },
+            variant: true,
+          },
+        },
       },
     });
   }

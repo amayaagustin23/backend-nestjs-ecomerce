@@ -46,8 +46,6 @@ export class CategoriesController {
     return this.categoriesService.create(createCategoryDto);
   }
 
-  @HasRoles(Role.SUPERADMIN, Role.ADMIN, Role.CLIENT)
-  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get()
   @ApiOperation({
     summary: 'Gets a paginated list of all categories',
@@ -58,8 +56,6 @@ export class CategoriesController {
     return this.categoriesService.getAllCategories(pagination);
   }
 
-  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
-  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get(':id')
   @ApiOperation({
     summary: 'Get a category',

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
 import { JwtPayload } from 'src/config';
 import { MessagingService } from 'src/services/messaging/messaging.service';
@@ -74,7 +75,7 @@ export class AuthService {
     return user;
   }
 
-  async login(credentials: LoginDto) {
+  async login(credentials: LoginDto, res: Response) {
     const findUser = await this.userService.get({
       where: { email: credentials.email },
     });
@@ -96,15 +97,30 @@ export class AuthService {
       );
     }
 
-    const tokens = await this.createTokens({
+    const { accessToken, refreshToken } = await this.createTokens({
       id: findUser.id,
       email: findUser.email,
       role: findUser.role,
     });
 
+    // Seteá la cookie segura
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 1000 * 60 * 60 * 24, // 1 día
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
+    });
+
     return {
       user: await this.userService.mapToBasicUserInfoFromUser(findUser),
-      tokens,
+      // opcional: podrías omitir tokens si ya van en cookies
     };
   }
 
@@ -179,6 +195,10 @@ export class AuthService {
     };
   }
 
+  async getMe(id: string) {
+    const user = await this.userService.get({ where: { id } });
+    return this.userService.mapToBasicUserInfoFromUser(user);
+  }
   private async createTokens(payload: JwtPayload) {
     return {
       accessToken: await this.jwtService.signAsync(

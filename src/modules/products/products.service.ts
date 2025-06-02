@@ -18,7 +18,7 @@ import { paginatePrisma } from 'src/common/pagination';
 import { PaginationAndProductArgs } from 'src/common/pagination/pagination.interface';
 import { UploadService } from 'src/services/aws/aws.service';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { parseDateToRange, toBoolean } from 'src/utils/parsers';
+import { parseDateToRange, parseSortBy, toBoolean } from 'src/utils/parsers';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -119,10 +119,12 @@ export class ProductsService {
       startDate,
       endDate,
       orderBy,
-      categoryId,
-      brandId,
+      categoryIds,
+      category,
+      brandIds,
       minPrice,
       maxPrice,
+      variantsName,
     } = pagination;
 
     const dateFilter = date
@@ -142,14 +144,70 @@ export class ProductsService {
           }
         : undefined;
 
+    const parsedCategoryIds = categoryIds?.split(',') ?? [];
+    const parsedBrandIds = brandIds?.split(',') ?? [];
+    const parsedVariants =
+      variantsName
+        ?.split(',')
+        .map((v) => v.trim())
+        .filter((v) => v) ?? [];
+
     const where: Prisma.ProductWhereInput = {
       ...(search && {
         name: { contains: search, mode: 'insensitive' },
       }),
+
       ...(dateFilter && { createdAt: dateFilter }),
+
       ...(priceFilter && { price: priceFilter }),
-      ...(categoryId && { categoryId }),
-      ...(brandId && { brandId }),
+
+      ...(parsedCategoryIds.length > 0 && {
+        OR: [
+          {
+            category: {
+              id: { in: parsedCategoryIds },
+            },
+          },
+          {
+            category: {
+              parent: {
+                id: { in: parsedCategoryIds },
+              },
+            },
+          },
+        ],
+      }),
+
+      ...(category && {
+        OR: [
+          {
+            category: {
+              name: { contains: category, mode: 'insensitive' },
+            },
+          },
+          {
+            category: {
+              parent: {
+                name: { contains: category, mode: 'insensitive' },
+              },
+            },
+          },
+        ],
+      }),
+
+      ...(parsedBrandIds.length > 0 && { brandId: { in: parsedBrandIds } }),
+
+      ...(parsedVariants.length > 0 && {
+        variants: {
+          some: {
+            stock: { gt: 0 },
+            OR: [
+              { color: { in: parsedVariants } },
+              { size: { in: parsedVariants } },
+            ],
+          },
+        },
+      }),
     };
 
     const paginated = await paginatePrisma(
@@ -162,9 +220,7 @@ export class ProductsService {
           category: { include: { children: true } },
           brand: true,
         },
-        orderBy: {
-          [orderBy ?? 'createdAt']: 'desc',
-        },
+        orderBy: parseSortBy(orderBy),
       },
       pagination,
     );
@@ -276,7 +332,7 @@ export class ProductsService {
       .catch((e) => {
         if (e.code === 'P2002') {
           throw new ConflictException(
-            this.i18n.t('errors.conflict', { args: { model: 'Product' } }),
+            this.i18n.t('errors.conflict', { args: { model: 'Produ' } }),
           );
         }
         throw e;
@@ -344,6 +400,38 @@ export class ProductsService {
     }
 
     return this.mapToParsedProduct(updatedProduct);
+  }
+
+  async getUniqueSizes() {
+    const variants = await this.prisma.productVariant.findMany({
+      distinct: ['size'],
+      select: {
+        size: true,
+      },
+    });
+
+    return variants.map((v) => v.size);
+  }
+  async getUniqueColors() {
+    const variants = await this.prisma.productVariant.findMany({
+      distinct: ['color'],
+      select: {
+        color: true,
+      },
+    });
+
+    return variants.map((v) => v.color);
+  }
+
+  async getAllVariants() {
+    return [
+      ...(await this.getUniqueSizes()),
+      ...(await this.getUniqueColors()),
+    ];
+  }
+
+  async getAllBrands() {
+    return await this.prisma.brand.findMany();
   }
 
   mapToParsedProduct(

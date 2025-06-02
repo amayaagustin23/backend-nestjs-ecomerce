@@ -1,6 +1,5 @@
 import {
   Controller,
-  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -30,18 +29,23 @@ export class OrdersController {
     return this.ordersService.createOrderFromCart(id, userId);
   }
 
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get()
-  findAll() {
-    return this.ordersService.findAll();
+  @ApiOperation({ summary: 'Get orders' })
+  @ApiResponse({ status: 200, description: 'Get orders' })
+  @HttpCode(HttpStatus.OK)
+  findAll(@GetCurrentUser('userId') userId: string) {
+    return this.ordersService.findAll(userId);
   }
 
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get(':id')
+  @ApiOperation({ summary: 'Get orders' })
+  @ApiResponse({ status: 200, description: 'Get orders' })
+  @HttpCode(HttpStatus.OK)
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ordersService.remove(+id);
   }
 }
