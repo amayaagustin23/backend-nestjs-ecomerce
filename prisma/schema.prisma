@@ -144,8 +144,9 @@ model Product {
 
 model ProductVariant {
   id        String   @id @default(uuid())
-  size      String
-  color     String
+  size      String?
+  color     String?
+  gender     String?
   stock     Int
   productId String
   product   Product  @relation(fields: [productId], references: [id])

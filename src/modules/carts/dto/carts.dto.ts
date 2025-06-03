@@ -85,4 +85,9 @@ export class UpdateCartDto {
   @IsArray()
   @IsOptional()
   itemsToDelete?: string[];
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  couponCode: string;
 }

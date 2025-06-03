@@ -204,6 +204,7 @@ export class ProductsService {
             OR: [
               { color: { in: parsedVariants } },
               { size: { in: parsedVariants } },
+              { gender: { in: parsedVariants } },
             ],
           },
         },
@@ -423,11 +424,16 @@ export class ProductsService {
     return variants.map((v) => v.color);
   }
 
-  async getAllVariants() {
-    return [
-      ...(await this.getUniqueSizes()),
-      ...(await this.getUniqueColors()),
-    ];
+  async getUniqueGenders() {
+    const variants = await this.prisma.productVariant.findMany({
+      where: { gender: { not: null } },
+      distinct: ['gender'],
+      select: {
+        gender: true,
+      },
+    });
+
+    return variants.map((v) => v.gender);
   }
 
   async getAllBrands() {

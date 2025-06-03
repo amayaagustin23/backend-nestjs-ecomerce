@@ -14,7 +14,7 @@ export interface BasicUserInfo {
   name?: string;
   phone?: string;
   cuitOrDni?: string;
-
+  points: number;
   addresses?: Address[];
 }
 

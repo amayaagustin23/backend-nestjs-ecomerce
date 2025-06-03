@@ -206,7 +206,7 @@ export class CartsService {
   async update(id: string, dto: UpdateCartDto, userId: string) {
     const existingCart = await this.cart.findUnique({
       where: { id },
-      include: { items: true, coupon: true },
+      include: { items: { include: { product: true } }, coupon: true },
     });
 
     if (!existingCart || existingCart.userId !== userId) {
@@ -215,27 +215,85 @@ export class CartsService {
       );
     }
 
-    const { itemsToAdd, itemsToUpdate, itemsToDelete } = dto;
+    const { itemsToAdd, itemsToUpdate, itemsToDelete, couponCode } = dto;
+    const notAdded: string[] = [];
 
+    // Validar y aplicar cupón si llega
+    let newCoupon = existingCart.coupon;
+    if (couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({
+        where: { code: couponCode },
+      });
+
+      if (!coupon) {
+        throw new NotFoundException(
+          (this.i18n.t('errors.notFound') as string).replace(
+            '{{model}}',
+            'Cupón',
+          ),
+        );
+      }
+
+      if (coupon.expiresAt < new Date()) {
+        throw new ConflictException(this.i18n.t('errors.CouponExpired'));
+      }
+
+      const userCoupon = await this.prisma.userCoupon.findFirst({
+        where: {
+          userId,
+          couponId: coupon.id,
+          enabled: true,
+        },
+      });
+
+      if (!userCoupon) {
+        throw new ConflictException(this.i18n.t('errors.couponAlreadyClaimed'));
+      }
+
+      await this.cart.update({
+        where: { id },
+        data: {
+          coupon: { connect: { id: coupon.id } },
+        },
+      });
+
+      newCoupon = coupon;
+    }
+
+    const couponValue = newCoupon?.value || 0;
+
+    // Eliminar items
     if (itemsToDelete?.length) {
       await this.cartItem.deleteMany({
         where: { id: { in: itemsToDelete } },
       });
     }
 
+    // Actualizar items existentes
     if (itemsToUpdate?.length) {
+      const existingItems = await this.cartItem.findMany({
+        where: { id: { in: itemsToUpdate.map((i) => i.id) } },
+        include: { product: true },
+      });
+
       await Promise.all(
-        itemsToUpdate.map((item) =>
-          this.cartItem.update({
+        itemsToUpdate.map(async (item) => {
+          const existing = existingItems.find((i) => i.id === item.id);
+          if (!existing) return;
+
+          const unitPrice = existing.product.price;
+          const discount = +(unitPrice * (couponValue / 100)).toFixed(2);
+          const finalPrice = +(unitPrice - discount).toFixed(2);
+
+          await this.cartItem.update({
             where: { id: item.id },
-            data: { quantity: item.quantity },
-          }),
-        ),
+            data: { quantity: item.quantity, unitPrice, discount, finalPrice },
+          });
+        }),
       );
     }
 
-    const notAdded: string[] = [];
-
+    // Agregar nuevos items
     if (itemsToAdd?.length) {
       const variants = await this.prisma.productVariant.findMany({
         where: {
@@ -255,9 +313,7 @@ export class CartsService {
         }
 
         const unitPrice = variant.product.price;
-        const discount = existingCart.coupon
-          ? +(unitPrice * (existingCart.coupon.value / 100)).toFixed(2)
-          : 0;
+        const discount = +(unitPrice * (couponValue / 100)).toFixed(2);
         const finalPrice = +(unitPrice - discount).toFixed(2);
 
         await this.cartItem.create({
@@ -274,10 +330,31 @@ export class CartsService {
       }
     }
 
+    // 💡 Si solo llegó couponCode, recalcular los items actuales
+    if (
+      couponCode &&
+      !itemsToAdd?.length &&
+      !itemsToUpdate?.length &&
+      !itemsToDelete?.length
+    ) {
+      await Promise.all(
+        existingCart.items.map(async (item) => {
+          const unitPrice = item.product.price;
+          const discount = +(unitPrice * (couponValue / 100)).toFixed(2);
+          const finalPrice = +(unitPrice - discount).toFixed(2);
+
+          await this.cartItem.update({
+            where: { id: item.id },
+            data: { unitPrice, discount, finalPrice },
+          });
+        }),
+      );
+    }
+
     return {
       cart: await this.cart.findUnique({
         where: { id },
-        include: { items: true },
+        include: { items: true, coupon: true },
       }),
       error: notAdded.length
         ? (this.i18n.t('errors.stockUnavailable') as string).replace(

@@ -9,6 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 import { BrandsModule } from '../brands/brands.module';
 import { CartsModule } from '../carts/carts.module';
 import { CategoriesModule } from '../categories/categories.module';
+import { CouponsModule } from '../coupons/coupons.module';
 import { OrdersModule } from '../orders/orders.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { ProductsModule } from '../products/products.module';
@@ -35,6 +36,7 @@ import { AppService } from './app.service';
     OrdersModule,
     PaymentsModule,
     GooglePlacesModule,
+    CouponsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

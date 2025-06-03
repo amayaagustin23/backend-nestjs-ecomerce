@@ -101,13 +101,33 @@ export class ProductsController {
     return this.productsService.getAllBrands();
   }
 
-  @Get('all/variants')
+  @Get('variants/colors')
   @ApiOperation({
     summary: 'Gets all variants',
   })
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  getAllVariants() {
-    return this.productsService.getAllVariants();
+  getUniqueColors() {
+    return this.productsService.getUniqueColors();
+  }
+
+  @Get('variants/sizes')
+  @ApiOperation({
+    summary: 'Gets all variants',
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  getUniqueSizes() {
+    return this.productsService.getUniqueSizes();
+  }
+
+  @Get('variants/genders')
+  @ApiOperation({
+    summary: 'Gets all variants',
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  getUniqueGenders() {
+    return this.productsService.getUniqueGenders();
   }
 }

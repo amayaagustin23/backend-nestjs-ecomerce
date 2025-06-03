@@ -6,13 +6,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Address, Person, Prisma, Role, User } from '@prisma/client';
+import {
+  Address,
+  CouponStatus,
+  Person,
+  Prisma,
+  Role,
+  User,
+} from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { BasicUserInfo } from 'src/common/interfaces/index.interface';
 import { paginatePrisma } from 'src/common/pagination';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { CryptoService } from 'src/services/crypto/crypto.service';
-import { parseDateToRange } from 'src/utils/parsers';
+import { generateCustomCode, parseDateToRange } from 'src/utils/parsers';
 import { hashPassword } from 'src/utils/password';
 import { MessagingService } from '../../services/messaging/messaging.service';
 import { PrismaService } from '../../services/prisma/prisma.service';
@@ -270,15 +277,8 @@ export class UsersService {
       );
     }
 
-    const alreadyClaimed = await this.prisma.userCoupon.findFirst({
-      where: { userId, couponId: coupon.id },
-    });
-
-    if (alreadyClaimed) {
-      throw new ConflictException(this.i18n.t('errors.couponAlreadyClaimed'));
-    }
-
-    if (coupon.expiresAt < new Date()) {
+    const now = new Date();
+    if (coupon.expiresAt < now) {
       throw new BadRequestException(this.i18n.t('errors.couponExpired'));
     }
 
@@ -291,11 +291,17 @@ export class UsersService {
       throw new BadRequestException(message);
     }
 
-    await this.prisma.userCoupon.create({
+    const { id: _originalId, ...couponData } = coupon;
+    const newCoupon = await this.prisma.coupon.create({
       data: {
-        user: { connect: { id: userId } },
-        coupon: { connect: { id: coupon.id } },
+        ...couponData,
+        status: CouponStatus.REDEEMED,
+        code: generateCustomCode(),
       },
+    });
+
+    await this.prisma.userCoupon.create({
+      data: { userId, couponId: newCoupon.id },
     });
 
     await this.prisma.user.update({
@@ -303,7 +309,7 @@ export class UsersService {
       data: { points: { decrement: coupon.price } },
     });
 
-    return await this.getRaw({ where: { id: userId } });
+    return this.getRaw({ where: { id: userId } });
   }
 
   async mapToBasicUserInfoFromUser(
@@ -311,7 +317,7 @@ export class UsersService {
   ): Promise<Partial<BasicUserInfo>> {
     if (!user) return {};
 
-    const { id, email, role, person, addresses } = user;
+    const { id, email, role, person, addresses, points } = user;
 
     return {
       id,
@@ -320,6 +326,7 @@ export class UsersService {
       name: person?.name,
       phone: person?.phone,
       cuitOrDni: person?.cuitOrDni,
+      points,
       addresses,
     };
   }

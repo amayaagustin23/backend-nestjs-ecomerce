@@ -34,3 +34,20 @@ export const parseSortBy = (value: string): Record<string, 'asc' | 'desc'> => {
     return { [field]: direction as 'asc' | 'desc' };
   }
 };
+
+export const generateCustomCode = (
+  prefix: string = 'ECFS_AJA1109',
+  blocks: number = 4,
+  blockLength: number = 4,
+): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+  const generateBlock = () =>
+    Array.from(
+      { length: blockLength },
+      () => chars[Math.floor(Math.random() * chars.length)],
+    ).join('');
+
+  const suffix = Array.from({ length: blocks }, generateBlock).join('-');
+  return `${prefix}-${suffix}`;
+};

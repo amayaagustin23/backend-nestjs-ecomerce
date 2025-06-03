@@ -76,7 +76,7 @@ export class UsersController {
 
   @HasRoles(Role.CLIENT)
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Patch('exchange-coupon/:code')
+  @Patch('exchange-coupon-points/:code')
   @ApiOperation({ summary: 'Updates an existing user' })
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
