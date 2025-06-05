@@ -192,6 +192,15 @@ export class CategoriesService {
     };
   }
 
+  async getAllCategoriesOutPaginated() {
+    return await this.category
+      .findMany({
+        where: { parent: null },
+        include: { children: true },
+      })
+      .then((data) => this.parseCategories(data));
+  }
+
   private parseCategories(data: CategoryRaw[]): CategoryParsed[] {
     return data
       .filter((cat) => cat.parentId === null)

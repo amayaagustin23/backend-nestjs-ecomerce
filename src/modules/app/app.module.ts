@@ -11,6 +11,7 @@ import { CartsModule } from '../carts/carts.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { CouponsModule } from '../coupons/coupons.module';
 import { OrdersModule } from '../orders/orders.module';
+import { PanelModule } from '../panel/panel.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { ProductsModule } from '../products/products.module';
 import { UsersModule } from '../users/users.module';
@@ -37,6 +38,7 @@ import { AppService } from './app.service';
     PaymentsModule,
     GooglePlacesModule,
     CouponsModule,
+    PanelModule,
   ],
   controllers: [AppController],
   providers: [AppService],

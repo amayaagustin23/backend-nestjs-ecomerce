@@ -26,22 +26,20 @@ export interface ParsedProduct {
   isService: boolean;
   isActive: boolean;
   hasDelivery: boolean;
+  isFavorite?: boolean;
   category: {
     id: string;
     name: string;
-    subcategories: {
-      id: string;
-      name: string;
-    }[];
+    subcategories: { id: string; name: string }[];
   } | null;
   brand: {
     id: string;
     name: string;
-    code: string | null;
+    code: string;
   } | null;
   variants: {
     id: string;
-    size: string;
+    size: string | null;
     color: string;
     stock: number;
   }[];

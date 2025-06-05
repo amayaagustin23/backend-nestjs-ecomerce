@@ -18,7 +18,7 @@ import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { Role } from 'src/constants';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { UpdateUserDto } from './dto/user.dto';
+import { AddressDto, UpdateUserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
@@ -63,7 +63,7 @@ export class UsersController {
 
   @HasRoles(Role.CLIENT)
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Patch('address-default/:id')
+  @Patch('address/default/:id')
   @ApiOperation({ summary: 'Updates an existing user' })
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -72,6 +72,43 @@ export class UsersController {
     @GetCurrentUser('userId') userId: string,
   ) {
     return this.usersService.addressDefaultUpdate(id, userId);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address/create')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  addAddressByUser(
+    @GetCurrentUser('userId') userId: string,
+    @Body() data: AddressDto,
+  ) {
+    return this.usersService.addAddressByUser(userId, data);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address/delete/:id')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  deleteAddressByUser(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.usersService.deleteAddressByUser(id);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address/update/:id')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  updateAddressByUser(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @GetCurrentUser('userId') userId: string,
+    @Body() data: AddressDto,
+  ) {
+    return this.usersService.updateAddressByUser(id, userId, data);
   }
 
   @HasRoles(Role.CLIENT)
@@ -95,5 +132,31 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   deleteUser(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.usersService.deleteUser(id);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('add/product')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  addFavoriteProduct(
+    @Body() data: { productId: string },
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.addFavoriteProduct(data, userId);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('delete/product')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  deleteFavoriteProduct(
+    @Body() data: { productId: string },
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.deleteFavoriteProduct(data, userId);
   }
 }

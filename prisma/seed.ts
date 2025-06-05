@@ -473,6 +473,20 @@ async function main() {
       });
     }
   }
+  await prisma.user.create({
+    data: {
+      email: 'admin@gmail.com',
+      password,
+      role: 'ADMIN',
+      person: {
+        create: {
+          name: 'Admin',
+          phone: faker.phone.number(),
+          cuitOrDni: faker.string.numeric(11),
+        },
+      },
+    },
+  });
 }
 
 main()

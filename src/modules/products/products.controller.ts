@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -9,10 +10,12 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import {
   FileFieldsInterceptor,
   FilesInterceptor,
@@ -25,6 +28,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Request } from 'express';
+import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { PaginationAndProductArgs } from 'src/common/pagination/pagination.interface';
 import { Role } from 'src/constants';
@@ -36,7 +41,10 @@ import { ProductsService } from './products.service';
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create one product' })
@@ -59,17 +67,27 @@ export class ProductsController {
   @ApiOperation({
     summary: 'Gets a paginated list of all products',
   })
-  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  getAllProducts(@Query() pagination: PaginationAndProductArgs) {
-    return this.productsService.getAllProducts(pagination);
+  getAllProducts(
+    @Query() pagination: PaginationAndProductArgs,
+    @Req() req: Request,
+  ) {
+    const token = req.cookies?.access_token;
+
+    let userId: string | undefined;
+
+    if (token) {
+      const payload = this.jwtService.decode(token) as { id: string };
+      userId = payload?.id;
+    }
+
+    return this.productsService.getAllProducts(pagination, userId);
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get a product',
   })
-  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   getProductById(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.productsService.getProductById(id);
@@ -89,6 +107,18 @@ export class ProductsController {
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     return this.productsService.updateProduct(id, body, files);
+  }
+
+  @Get('favortes/user')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.CLIENT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a product' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('files'))
+  async getAllFavorites(@GetCurrentUser('userId') userId: string) {
+    return this.productsService.getAllFavorites(userId);
   }
 
   @Get('all/brands')
@@ -129,5 +159,15 @@ export class ProductsController {
   @HttpCode(HttpStatus.OK)
   getUniqueGenders() {
     return this.productsService.getUniqueGenders();
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a product' })
+  async deleteProductById(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.productsService.deleteProductById(id);
   }
 }

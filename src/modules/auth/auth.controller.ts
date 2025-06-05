@@ -5,7 +5,6 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -61,19 +60,17 @@ export class AuthController {
     return this.authService.recoverPassword(body);
   }
 
-  @UseGuards(AccessTokenGuard, RolesGuard)
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password' })
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @HttpCode(HttpStatus.OK)
-  resetPassword(@Body() body: ResetPasswordDto, @Req() req) {
-    const { userId } = req.user;
-    return this.authService.resetPassword(userId, body);
+  resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPassword(body);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @HasRoles(Role.CLIENT)
+  @HasRoles(Role.CLIENT, Role.ADMIN, Role.SUPERADMIN)
   @Get('me')
   @ApiOperation({ summary: 'Reset password' })
   @ApiBody({ type: ResetPasswordDto })
@@ -81,5 +78,24 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   getMe(@GetCurrentUser('userId') userId: string) {
     return this.authService.getMe(userId);
+  }
+
+  @Get('logout')
+  @HttpCode(HttpStatus.OK)
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'dev',
+    });
+    res.clearCookie('refresh_token', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'dev',
+    });
+
+    return { message: 'Logged out' };
   }
 }

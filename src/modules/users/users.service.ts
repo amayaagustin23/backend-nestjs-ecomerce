@@ -24,6 +24,7 @@ import { hashPassword } from 'src/utils/password';
 import { MessagingService } from '../../services/messaging/messaging.service';
 import { PrismaService } from '../../services/prisma/prisma.service';
 import {
+  AddressDto,
   RegisterUserDto,
   ResetPasswordDto,
   UpdateUserDto,
@@ -56,7 +57,7 @@ export class UsersService {
     const { where } = input;
     const user = await this.user.findFirst({
       where: { ...where, isDeleted: false },
-      include: { person: true },
+      include: { person: true, addresses: true },
     });
     if (!user) return undefined;
     return user;
@@ -77,9 +78,7 @@ export class UsersService {
     });
 
     if (existingActiveUser) {
-      throw new ConflictException(
-        this.i18n.t('errors.conflict').replace('{{model}}', 'User'),
-      );
+      throw new ConflictException('Ya existe un usuario con ese correo');
     }
 
     const addressIsComplete =
@@ -291,7 +290,7 @@ export class UsersService {
       throw new BadRequestException(message);
     }
 
-    const { id: _originalId, ...couponData } = coupon;
+    const { id, ...couponData } = coupon;
     const newCoupon = await this.prisma.coupon.create({
       data: {
         ...couponData,
@@ -301,7 +300,7 @@ export class UsersService {
     });
 
     await this.prisma.userCoupon.create({
-      data: { userId, couponId: newCoupon.id },
+      data: { userId, couponId: newCoupon.id, parentCouponId: id },
     });
 
     await this.prisma.user.update({
@@ -310,6 +309,89 @@ export class UsersService {
     });
 
     return this.getRaw({ where: { id: userId } });
+  }
+
+  async addFavoriteProduct(data: { productId: string }, userId: string) {
+    await this.prisma.favoriteProduct
+      .create({
+        data: {
+          product: { connect: { id: data.productId } },
+          user: { connect: { id: userId } },
+        },
+      })
+      .catch((e) => {
+        if (e.code === 'P2002') {
+          throw new ConflictException('El producto ya es favorito');
+        }
+        throw e;
+      });
+  }
+
+  async deleteFavoriteProduct(data: { productId: string }, userId: string) {
+    await this.prisma.favoriteProduct
+      .deleteMany({
+        where: {
+          productId: data.productId,
+          userId,
+        },
+      })
+      .catch((e) => {
+        if (e.code === 'P2002') {
+          throw new ConflictException('El producto ya es favorito');
+        }
+        throw e;
+      });
+  }
+
+  async addAddressByUser(userId: string, data: AddressDto): Promise<Address> {
+    const { street, city, province, postalCode, lat, lng } = data;
+
+    const address = await this.prisma.address.create({
+      data: {
+        street,
+        city,
+        province,
+        postalCode,
+        lat: lat ?? 0,
+        lng: lng ?? 0,
+        user: { connect: { id: userId } },
+      },
+    });
+
+    return address;
+  }
+
+  async deleteAddressByUser(id: string) {
+    const address = await this.prisma.address.delete({
+      where: { id },
+    });
+    if (!address) {
+      throw new NotFoundException(
+        this.i18n.t('errors.notFound').replace('{{model}}', 'Dirección'),
+      );
+    }
+  }
+
+  async updateAddressByUser(
+    id: string,
+    userId: string,
+    data: AddressDto,
+  ): Promise<Address> {
+    const { street, city, province, postalCode, lat, lng } = data;
+
+    const address = await this.prisma.address.update({
+      where: { id, userId },
+      data: {
+        street,
+        city,
+        province,
+        postalCode,
+        lat: lat ?? 0,
+        lng: lng ?? 0,
+      },
+    });
+
+    return address;
   }
 
   async mapToBasicUserInfoFromUser(

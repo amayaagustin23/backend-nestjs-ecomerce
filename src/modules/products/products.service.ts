@@ -7,6 +7,7 @@ import {
 import {
   Brand,
   Category,
+  FavoriteProduct,
   Prisma,
   Product,
   ProductImage,
@@ -112,7 +113,7 @@ export class ProductsService {
     return this.mapToParsedProduct(product);
   }
 
-  async getAllProducts(pagination: PaginationAndProductArgs) {
+  async getAllProducts(pagination: PaginationAndProductArgs, userId?: string) {
     const {
       search,
       date,
@@ -210,12 +211,12 @@ export class ProductsService {
         },
       }),
     };
-
     const paginated = await paginatePrisma(
       this.product,
       {
         where,
         include: {
+          ...(userId && { favoritedBy: true }),
           variants: true,
           images: true,
           category: { include: { children: true } },
@@ -236,6 +237,7 @@ export class ProductsService {
     const productId = await this.getRaw({
       where: { id },
       include: {
+        favoritedBy: true,
         variants: true,
         images: true,
         category: { include: { children: true } },
@@ -257,10 +259,13 @@ export class ProductsService {
     body: UpdateProductDto,
     files?: Express.Multer.File[],
   ) {
+    console.log(body);
+
     const {
       variants,
       variantsToDelete,
       imagesToDelete,
+      variantsToUpdate,
       categoryId,
       brandId,
       ...rest
@@ -269,11 +274,15 @@ export class ProductsService {
     let parsedVariants: UpdateProductVariantDto[] = [];
     let parsedVariantsToDelete: string[] = [];
     let parsedImagesToDelete: string[] = [];
+    let parsedVariantsToUpdate: UpdateProductVariantDto[] = [];
 
     try {
       parsedVariants = variants ? JSON.parse(variants) : [];
       parsedVariantsToDelete = variantsToDelete
         ? JSON.parse(variantsToDelete)
+        : [];
+      parsedVariantsToUpdate = variantsToUpdate
+        ? JSON.parse(variantsToUpdate)
         : [];
       parsedImagesToDelete = imagesToDelete ? JSON.parse(imagesToDelete) : [];
     } catch (error) {
@@ -338,6 +347,15 @@ export class ProductsService {
         }
         throw e;
       });
+    if (parsedVariantsToUpdate.length) {
+      for (const variant of parsedVariantsToUpdate) {
+        const { id, ...rest } = variant;
+        await this.prisma.productVariant.update({
+          where: { id },
+          data: { ...rest },
+        });
+      }
+    }
     if (parsedVariantsToDelete.length) {
       await this.prisma.productVariant.deleteMany({
         where: {
@@ -440,8 +458,65 @@ export class ProductsService {
     return await this.prisma.brand.findMany();
   }
 
-  mapToParsedProduct(
+  async getAllFavorites(userId: string): Promise<ParsedProduct[]> {
+    const productsFavorites = await this.prisma.product.findMany({
+      take: 4,
+      where: {
+        favoritedBy: {
+          some: { userId },
+        },
+      },
+      include: {
+        favoritedBy: true,
+        variants: true,
+        images: true,
+        category: {
+          include: {
+            children: true,
+          },
+        },
+        brand: true,
+      },
+    });
+
+    return productsFavorites.map((p) => this.mapToParsedProduct(p));
+  }
+
+  async deleteProductById(id: string) {
+    const product = await this.product.findUnique({
+      where: { id },
+      include: {
+        variants: true,
+        images: true,
+      },
+    });
+    if (!product) {
+      throw new ForbiddenException(
+        this.i18n.t('errors.notFound', { args: { model: 'Product' } }),
+      );
+    }
+    if (product.variants.length) {
+      throw new BadRequestException(
+        this.i18n.t('errors.conflict', { args: { model: 'Product' } }),
+      );
+    }
+    if (product.images.length) {
+      await this.prisma.productImage.deleteMany({
+        where: { productId: id },
+      });
+    }
+    await this.prisma.productImage.deleteMany({
+      where: { productId: id },
+    });
+    await this.prisma.product.update({
+      where: { id },
+      data: { isDeleted: false },
+    });
+  }
+
+  private mapToParsedProduct(
     product: Product & {
+      favoritedBy?: FavoriteProduct[];
       category?: Category & {
         children?: Category[];
       };
@@ -458,6 +533,7 @@ export class ProductsService {
       isService: product.isService,
       isActive: product.isActive,
       hasDelivery: product.hasDelivery,
+      isFavorite: !!product.favoritedBy?.length,
       category: product.category
         ? {
             id: product.category.id,

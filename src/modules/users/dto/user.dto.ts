@@ -184,6 +184,18 @@ export class RecoverPasswordDto {
 
 export class ResetPasswordDto {
   @ApiProperty({
+    description: 'Reset token',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  @IsString({
+    message: i18nValidationMessage('errors.validations.isString'),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('errors.validations.isNotEmpty'),
+  })
+  token: string;
+
+  @ApiProperty({
     description: 'User password',
     example: 'Pass1234',
   })

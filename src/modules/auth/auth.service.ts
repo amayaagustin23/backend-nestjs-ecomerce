@@ -153,9 +153,16 @@ export class AuthService {
     };
   }
 
-  async resetPassword(id: string, body: ResetPasswordDto) {
+  async resetPassword(body: ResetPasswordDto) {
+    const decoded = this.jwtService.decode(body.token);
+    if (!decoded?.id) {
+      throw new UnauthorizedException(
+        this.i18n.t('errors.validations.invalidToken'),
+      );
+    }
+    const userId = decoded.id;
     const findUser = await this.userService.getRaw({
-      where: { id },
+      where: { id: userId },
       select: {
         id: true,
         email: true,
@@ -163,33 +170,26 @@ export class AuthService {
         password: true,
       },
     });
-
     if (!findUser) throw new UnauthorizedException();
-
     if (body.password !== body.confirmPassword) {
       throw new BadRequestException(
         this.i18n.t('errors.validations.passwordComparison'),
       );
     }
-
     const samePassword = await comparePassword(
       body.password,
       findUser.password,
     );
-
     if (samePassword) {
       throw new ForbiddenException(
         this.i18n.t('errors.validations.samePassword'),
       );
     }
-
-    await this.userService.changePassword(id, body);
-
+    await this.userService.changePassword(userId, body);
     await this.messagingService.sendResetPasswordEmail({
       from: this.messagingConfig.emailSender,
       to: findUser.email,
     });
-
     return {
       message: this.i18n.t('emails.changePassword'),
     };

@@ -157,6 +157,10 @@ export class UpdateProductDto {
 
   @IsOptional()
   @IsString()
+  variantsToUpdate?: string;
+
+  @IsOptional()
+  @IsString()
   variantsToDelete?: string;
 
   @IsOptional()

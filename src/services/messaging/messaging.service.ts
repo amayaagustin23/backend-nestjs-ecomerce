@@ -54,6 +54,7 @@ export class MessagingService {
     redirectUrl: string;
   }) {
     const { from, to, redirectUrl } = input;
+
     const subject = this.i18n.t('emails.recoverPassword.subject');
     const body = this.i18n
       .t('emails.recoverPassword.body')

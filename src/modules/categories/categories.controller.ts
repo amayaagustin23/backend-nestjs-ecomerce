@@ -56,6 +56,16 @@ export class CategoriesController {
     return this.categoriesService.getAllCategories(pagination);
   }
 
+  @Get('all/out-paginated')
+  @ApiOperation({
+    summary: 'Gets a paginated list of all categories',
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  getAllCategoriesOutPaginated() {
+    return this.categoriesService.getAllCategoriesOutPaginated();
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get a category',
