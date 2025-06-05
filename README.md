@@ -93,36 +93,20 @@ cd tu-repo
 
 ## ⚙️ 3. Crear el archivo .env en la raíz
 
-# ===============================
-
-# ========== SERVER ============
-
-# ===============================
+# SERVER
 
 PORT=4000
 NODE_ENV=dev
 
-# ===============================
-
-# ======== DATABASE ============
-
-# ===============================
+# DATABASE
 
 DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/DATABASE_NAME
 
-# ===============================
-
-# ========== BCRYPT ============
-
-# ===============================
+# BCRYPT
 
 HASH_SALT=12
 
-# ===============================
-
-# ============ JWT =============
-
-# ===============================
+# JWT
 
 JWT_SECRET_KEY=your_jwt_secret_key
 JWT_EXPIRES_IN=1d
@@ -133,11 +117,7 @@ JWT_REFRESH_EXPIRES_IN=365d
 JWT_RESET_SECRET_KEY=your_jwt_reset_secret_key
 JWT_RESET_EXPIRES_IN=10m
 
-# ===============================
-
-# ========== MAILJET ===========
-
-# ===============================
+# MAILJET
 
 EMAIL_SENDER=youremail@example.com
 MAILJET_API_KEY=your_mailjet_api_key
@@ -146,33 +126,22 @@ MAILJET_SECRET_KEY=your_mailjet_secret_key
 BACKOFFICE_RESET_PASSWORD_URL=http://localhost:5173/cambiar-contraseña
 APP_RESET_PASSWORD_URL=com.example.app://reset-password
 
-# ===============================
 
-# ============ AWS =============
-
-# ===============================
+# AWS
 
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=us-east-2
 S3_BUCKET=your_bucket_name
 
-# ===============================
-
-# ======= MERCADO PAGO =========
-
-# ===============================
+# MERCADO PAGO
 
 MERCADOPAGO_ACCESS_TOKEN=your_access_token
 MERCADOPAGO_CLIENT_ID=your_client_id
 MERCADOPAGO_SECRET_KEY=your_secret_key
 MERCADOPAGO_WEBHOOK_URL=https://your-webhook-url/api/v1/payments/mercadopago/webhook
 
-# ===============================
-
-# ======= GOOGLE PLACES ========
-
-# ===============================
+# GOOGLE PLACES
 
 GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 
