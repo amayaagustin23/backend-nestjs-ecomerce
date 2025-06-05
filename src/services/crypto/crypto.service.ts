@@ -1,4 +1,3 @@
-// src/common/services/crypto.service.ts
 import { Injectable } from '@nestjs/common';
 import * as CryptoJS from 'crypto-js';
 
@@ -13,7 +12,6 @@ export class CryptoService {
 
   decrypt(encrypted: string): string {
     const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
-    console.log(bytes);
 
     return bytes.toString(CryptoJS.enc.Utf8);
   }

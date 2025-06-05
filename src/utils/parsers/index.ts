@@ -12,3 +12,49 @@ export const parseDateToRange = (date: Date): DateRange => {
     lt: newDate.endOf('day').toISOString(),
   };
 };
+
+export const toBoolean = (value: any): boolean =>
+  value === 'true' || value === true;
+
+export const capitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+export const formatARS = (value: number): string => {
+  return value.toLocaleString('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2,
+  });
+};
+
+export const parseSortBy = (value: string): Record<string, 'asc' | 'desc'> => {
+  if (value) {
+    const [field, direction] = value.split('_');
+    return { [field]: direction as 'asc' | 'desc' };
+  }
+};
+
+export const generateCustomCode = (
+  prefix: string = 'ECFS_AJA1109',
+  blocks: number = 4,
+  blockLength: number = 4,
+): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+  const generateBlock = () =>
+    Array.from(
+      { length: blockLength },
+      () => chars[Math.floor(Math.random() * chars.length)],
+    ).join('');
+
+  const suffix = Array.from({ length: blocks }, generateBlock).join('-');
+  return `${prefix}-${suffix}`;
+};
+
+export const formatDate = (date: Date) => {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}`;
+};

@@ -1,7 +1,12 @@
-import { ClassSerializerInterceptor, Logger } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Logger,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestApplication, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { I18nValidationPipe } from 'nestjs-i18n';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
@@ -12,6 +17,7 @@ import { AppModule } from './modules/app/app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors(CORS);
+  app.use(cookieParser());
   app.useGlobalInterceptors(new LoggerInterceptor());
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
@@ -22,8 +28,38 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      // ⬇️ ¡Este `validationError` es CLAVE para mostrar los mensajes como esperás!
+      validationError: {
+        target: false,
+        value: false,
+      },
+    }),
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
     }),
   );
+  app.useGlobalPipes(
+    new I18nValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      validationError: {
+        target: false,
+        value: false,
+      },
+    }),
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+
   app.useGlobalFilters(new ValidationErrorExceptionFilter());
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector), {

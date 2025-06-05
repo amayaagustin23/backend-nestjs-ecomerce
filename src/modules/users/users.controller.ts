@@ -12,12 +12,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { HasRoleEnums } from 'src/common/decorators/has-roles.decorator';
+import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
+import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
-import { RoleEnum } from 'src/constants';
+import { Role } from 'src/constants';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
-import { RoleEnumsGuard } from '../auth/guards/roles.guard';
-import { UpdateUserDto } from './dto/user.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AddressDto, UpdateUserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
@@ -25,8 +26,8 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get()
   @ApiOperation({
     summary: 'Gets a paginated list of all users',
@@ -37,8 +38,8 @@ export class UsersController {
     return this.usersService.getAllUsers(pagination);
   }
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Gets a user by its ID' })
   @ApiBearerAuth()
@@ -47,8 +48,8 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Patch(':id')
   @ApiOperation({ summary: 'Updates an existing user' })
   @ApiBearerAuth()
@@ -60,13 +61,102 @@ export class UsersController {
     return this.usersService.updateUser(id, data);
   }
 
-  @HasRoleEnums(RoleEnum.SUPERADMIN, RoleEnum.ADMIN)
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address/default/:id')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  addressDefaultUpdate(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.addressDefaultUpdate(id, userId);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address/create')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  addAddressByUser(
+    @GetCurrentUser('userId') userId: string,
+    @Body() data: AddressDto,
+  ) {
+    return this.usersService.addAddressByUser(userId, data);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address/delete/:id')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  deleteAddressByUser(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.usersService.deleteAddressByUser(id);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('address/update/:id')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  updateAddressByUser(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @GetCurrentUser('userId') userId: string,
+    @Body() data: AddressDto,
+  ) {
+    return this.usersService.updateAddressByUser(id, userId, data);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('exchange-coupon-points/:code')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  exchangeCoupon(
+    @Param('code') code: string,
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.exchangeCoupon(code, userId);
+  }
+
+  @HasRoles(Role.SUPERADMIN, Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Deletes a user' })
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   deleteUser(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.usersService.deleteUser(id);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('add/product')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  addFavoriteProduct(
+    @Body() data: { productId: string },
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.addFavoriteProduct(data, userId);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Patch('delete/product')
+  @ApiOperation({ summary: 'Updates an existing user' })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  deleteFavoriteProduct(
+    @Body() data: { productId: string },
+    @GetCurrentUser('userId') userId: string,
+  ) {
+    return this.usersService.deleteFavoriteProduct(data, userId);
   }
 }

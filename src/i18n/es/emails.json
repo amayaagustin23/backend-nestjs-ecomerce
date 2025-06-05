@@ -1,16 +1,32 @@
 {
   "recoverPassword": {
     "subject": "Recupera tu contraseña",
-    "body": "<p>Para recuperar tu contraseña, haz clic en el siguiente enlace:</p><a href=\"{redirectUrl}\">Recuperar contraseña</a>"
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">¿Olvidaste tu contraseña?</h2><p>Para recuperar el acceso a tu cuenta, hacé clic en el siguiente botón:</p><p style=\"text-align: center;\"><a href=\"{{redirectUrl}}\" style=\"display: inline-block; padding: 12px 24px; background-color: #3b5998; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;\">Recuperar contraseña</a></p><p style=\"margin-top: 20px;\">Si no solicitaste este cambio, ignorá este mensaje.</p></div></body></html>"
   },
-  "newPassword": {
-    "subject": "Acción requerida: Crea una nueva contraseña",
-    "body": "<p>Es necesario que crees una nueva contraseña para continuar utilizando tu cuenta. Haz clic en el siguiente enlace para realizar el cambio.</p><a href=\"{redirectUrl}\">Cambiar contraseña</a>"
+  "registerEmail": {
+    "subject": "¡Bienvenido a la plataforma!",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Hola {{name}},</h2><p>Gracias por registrarte. ¡Estamos felices de tenerte a bordo!</p><p>Esperamos que disfrutes de la experiencia.</p></div></body></html>"
   },
   "resetPassword": {
     "subject": "Cambio de contraseña",
-    "body": "<p>Su contraseña fue cambiada exitosamente</p>"
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Contraseña actualizada</h2><p>Tu contraseña fue cambiada exitosamente.</p></div></body></html>"
   },
-  "changePassword": "Su contraseña fue cambiada exitosamente",
-  "sendEmailURL": "Se envio el enlace, verifique su cuenta de correo electronico"
+  "notificationCartActive": {
+    "subject": "Hola {{name}}, tenés productos pendientes en tu carrito 🛒",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">¡Hola {{name}}!</h2><p>Notamos que tenés productos en tu carrito que aún no finalizaste.</p><p>¡Aprovechá antes de que se agoten!</p><p>Podés continuar tu compra ingresando a tu cuenta con el correo: <strong>{{email}}</strong></p><p><a href=\"https://tuplataforma.com/carrito\" style=\"color: #3b5998; font-weight: bold;\">Ir al carrito</a></p></div></body></html>"
+  },
+  "paymentApproved": {
+    "subject": "¡Gracias por tu compra, {{name}}! 🎉",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; border-radius: 10px; padding: 25px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">¡Gracias por tu compra, {{name}}!</h2><p>Tu pago fue <strong style=\"color: #3b5998;\">aprobado exitosamente</strong> y tu orden está siendo procesada.</p><p><strong>Número de pedido:</strong> {{orderId}}</p><hr/><h3>Resumen del pedido:</h3>{{itemsList}}<p><strong>Subtotal:</strong> {{subtotal}} ARS</p><p><strong>Envío:</strong> {{shippingCost}} ARS</p><p><strong>Total:</strong> <span style=\"color: #3b5998; font-weight: bold;\">{{total}} ARS</span></p><hr/><p>Pronto recibirás más información sobre el envío. Ante cualquier consulta, podés responder este email o contactarnos.</p><p style=\"font-size: 14px; color: #7f8c8d;\">Tu equipo de atención al cliente 🛍️</p></div></body></html>"
+  },
+  "paymentPending": {
+    "subject": "Estamos esperando tu pago, {{name}}",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 25px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Hola {{name}},</h2><p>Tu orden fue generada pero el pago aún está pendiente.</p><p>Podés completarlo ingresando con tu correo: <strong>{{email}}</strong></p><hr/><h3>Resumen del pedido:</h3>{{itemsList}}<p><strong>Subtotal:</strong> {{subtotal}} ARS</p><p><strong>Envío:</strong> {{shippingCost}} ARS</p><p><strong>Total:</strong> <span style=\"color: #3b5998; font-weight: bold;\">{{total}} ARS</span></p><hr/><p>Si ya realizaste el pago, te avisaremos apenas lo confirmemos.</p><p>Gracias por tu compra.</p></div></body></html>"
+  },
+  "paymentCancelled": {
+    "subject": "Tu pago fue cancelado, {{name}}",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 25px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Hola {{name}},</h2><p>Lamentamos informarte que el pago de tu orden fue cancelado.</p><p>Si fue un error, podés generar una nueva orden desde tu cuenta o contactarnos para más ayuda.</p><p>Gracias igual por tu interés.</p></div></body></html>"
+  },
+  "changePassword": "Tu contraseña fue actualizada correctamente.",
+  "sendEmailURL": "Enlace enviado. Verificá tu casilla de correo."
 }

@@ -1,58 +1,46 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import {
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
-import * as crypto from 'crypto';
-import { I18nService } from 'nestjs-i18n';
-import { awsConfig } from '../../config';
-import { FileType } from '../../constants';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as mime from 'mime-types';
+import { extname } from 'path';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
-export class AwsService {
-  private s3Client: S3Client;
-  private logger = new Logger(AwsService.name);
+export class UploadService {
+  private s3: S3Client;
+  private region: string;
+  private bucket: string;
 
-  constructor(private i18n: I18nService) {
-    this.s3Client = new S3Client(awsConfig.client);
+  constructor(private readonly configService: ConfigService) {
+    this.region = this.configService.get<string>('AWS_REGION')!;
+    this.bucket = this.configService.get<string>('S3_BUCKET')!;
+    this.s3 = new S3Client({
+      region: this.region,
+      credentials: {
+        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID')!,
+        secretAccessKey: this.configService.get<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        )!,
+      },
+    });
   }
 
-  async uploadFile(base64File: string, fileType: FileType) {
-    const fileExtensionsByMimetype: { [key: string]: string } = {
-      'image/jpeg': 'jpg',
-      'image/png': 'png',
-      'image/gif': 'gif',
-      'image/tiff': 'tiff',
-      'image/bmp': 'bmp',
-      'image/webp': 'webp',
-      'image/svg+xml': 'svg',
-      'application/pdf': 'pdf',
-      'application/msword': 'doc',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        'docx',
-      'application/vnd.ms-excel': 'xls',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-        'xlsx',
-    };
-    try {
-      const contentType = base64File.split(';')[0].split(':')[1];
-      const data = base64File.split(',');
-      const buffer = Buffer.from(data[1], 'base64');
-      const extension = fileExtensionsByMimetype[contentType] ?? 'file';
-      const key = `${fileType}/${crypto.randomUUID()}.${extension}`;
-      await this.s3Client.send(
-        new PutObjectCommand({
-          Bucket: awsConfig.s3.bucket,
-          ContentType: contentType,
-          Key: key,
-          Body: buffer,
-        }),
-      );
-      return `https://${awsConfig.s3.bucket}.s3.${awsConfig.client.region}.amazonaws.com/${key}`;
-    } catch (err) {
-      this.logger.error(`Error uploading ${fileType}`, (err as Error).stack);
-      throw new InternalServerErrorException(this.i18n.t('errors.fileUpload'));
-    }
+  async upload(file: Express.Multer.File): Promise<string> {
+    const extension =
+      extname(file.originalname) ||
+      `.${mime.extension(file.mimetype)}` ||
+      '.jpg';
+    const fileName = `products/${uuid()}${extension}`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: fileName,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
+
+    await this.s3.send(command);
+
+    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${fileName}`;
   }
 }

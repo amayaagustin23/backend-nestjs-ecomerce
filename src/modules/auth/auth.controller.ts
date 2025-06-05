@@ -1,13 +1,18 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
-  Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
+import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
+import { HasRoles } from 'src/common/decorators/has-roles.decorator';
+import { Role } from 'src/constants';
 import {
   RecoverPasswordDto,
   RegisterUserDto,
@@ -16,14 +21,13 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AccessTokenGuard } from './guards/access-token.guard';
-import { RoleEnumsGuard } from './guards/roles.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // ******** REGISTER ********
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({
@@ -35,17 +39,18 @@ export class AuthController {
     return this.authService.register(userData);
   }
 
-  // ******** LOGIN ********
   @Post('login')
   @ApiOperation({ summary: 'Login a user' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @HttpCode(HttpStatus.OK)
-  login(@Body() credentials: LoginDto) {
-    return this.authService.login(credentials);
+  login(
+    @Body() credentials: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.login(credentials, res);
   }
 
-  // ******** RECOVER PASSWORD ********
   @Post('recover-password')
   @ApiOperation({ summary: 'Recover password' })
   @ApiBody({ type: RecoverPasswordDto })
@@ -55,15 +60,42 @@ export class AuthController {
     return this.authService.recoverPassword(body);
   }
 
-  // ******** RESET PASSWORD ********
-  @UseGuards(AccessTokenGuard, RoleEnumsGuard)
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password' })
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @HttpCode(HttpStatus.OK)
-  resetPassword(@Body() body: ResetPasswordDto, @Req() req) {
-    const { userId } = req.user;
-    return this.authService.resetPassword(userId, body);
+  resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPassword(body);
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.CLIENT, Role.ADMIN, Role.SUPERADMIN)
+  @Get('me')
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @HttpCode(HttpStatus.OK)
+  getMe(@GetCurrentUser('userId') userId: string) {
+    return this.authService.getMe(userId);
+  }
+
+  @Get('logout')
+  @HttpCode(HttpStatus.OK)
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'dev',
+    });
+    res.clearCookie('refresh_token', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'dev',
+    });
+
+    return { message: 'Logged out' };
   }
 }

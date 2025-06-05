@@ -1,201 +1,201 @@
-# Estructura del proyecto
+# 🛒 Proyecto E-commerce - Backend | NestJS + Prisma
 
-## Dependencias necesarias del proyecto
+Este proyecto forma parte de mi portfolio profesional, desarrollado en solo **7 días** como demostración de mis habilidades Full Stack. La idea principal fue construir un sistema de e-commerce **completo y funcional**, aplicando buenas prácticas, integraciones reales y lógica de negocio.
 
-- Dependencias para autenticación y seguridad:
+> 📅 Últimos avances implementados **entre ayer y hoy**  
+> ✅ Proyecto en etapa MVP **con flujo completo de compra funcionando**
 
-  - **jwt**: Esta biblioteca se utiliza para implementar la autenticación basada en tokens JSON Web Tokens. Genera y verifica tokens que contienen información del usuario, lo que permite identificar y autorizar a los usuarios de manera segura.
-  - **bcrypt**: Esta librería se encarga de encriptar contraseñas de forma segura utilizando el algoritmo bcrypt. Esto significa que las contraseñas almacenadas en la base de datos no se guardan en texto plano, sino en un formato hash que es difícil de descifrar.
+---
 
-- Dependencias para la base de datos:
+## 💡 ¿Qué incluye el proyecto?
 
-  - **pg**: Esta biblioteca es un cliente Node.js para PostgreSQL, uno de los sistemas de gestión de bases de datos relacionales más populares. Se utiliza para interactuar con la base de datos y ejecutar consultas SQL.
-  - **prisma**: Prisma es un ORM (Object-Relational Mapper) que facilita la interacción con la base de datos. Genera automáticamente código TypeScript a partir de un esquema de datos definido, lo que simplifica la escritura de consultas y la gestión de la base de datos.
+- 🔐 Autenticación JWT y recuperación de contraseña con envío de email.
+- 🛍️ Gestión de productos con variantes (color, talle, género) y control de stock.
+- 🖼️ Subida de imágenes a Amazon S3.
+- 💳 Integración real con **Mercado Pago** para el proceso de compra.
+- 🎟️ Sistema de cupones y puntos acumulables por compra.
+- 📦 Órdenes automáticas tras el pago, con historial de pedidos por usuario.
+- 📊 Panel administrativo con métricas, dashboard, control de usuarios, productos y exportación PDF.
+- 🌍 Internacionalización con soporte multi-idioma.
+- 📄 Documentación de API generada automáticamente con Swagger.
 
-- Dependencias para internacionalización y validación:
+---
 
-  - **i18n**: Esta biblioteca se utiliza para implementar la internacionalización, es decir, para adaptar la aplicación a diferentes idiomas y regiones. Permite traducir textos, formatos de fecha y hora, y otros elementos de la interfaz de usuario.
-  - **cross-env**: Esta herramienta se utiliza para definir variables de entorno que pueden ser utilizadas en diferentes entornos (desarrollo, producción, etc.).
-  - **joi**: Joi es una biblioteca de validación de datos. Se utiliza para definir esquemas de validación y verificar que los datos de entrada cumplan con los requisitos establecidos.
+## 🧱 Stack Tecnológico
 
-- Dependencias para documentación y desarrollo:
+| Categoría            | Tecnología                           |
+| -------------------- | ------------------------------------ |
+| Lenguaje             | TypeScript                           |
+| Framework Backend    | [NestJS](https://nestjs.com/)        |
+| ORM                  | [Prisma](https://www.prisma.io/)     |
+| Base de datos        | PostgreSQL                           |
+| Autenticación        | JWT + Bcrypt                         |
+| Validación           | Joi                                  |
+| Subida de archivos   | Amazon S3 (`@aws-sdk/client-s3`)     |
+| Correos              | Mailjet                              |
+| Documentación API    | Swagger                              |
+| Internacionalización | nestjs-i18n                          |
+| Dev Tools            | ESLint, Prettier, Husky, Lint-staged |
 
-  - **swagger**: Swagger es una herramienta para definir y documentar APIs RESTful. Genera automáticamente una interfaz de usuario interactiva que permite a los desarrolladores explorar y probar la API.
-  - **moment**: Moment.js es una biblioteca para manipular fechas y horas en JavaScript. Se utiliza para formatear fechas, calcular diferencias entre fechas, y realizar otras operaciones relacionadas con el tiempo.
-  - **node-mailjet**: Esta biblioteca se utiliza para enviar correos electrónicos a través del servicio Mailjet. Es útil para implementar funcionalidades como envío de correos de bienvenida, notificaciones, etc.
+---
 
-- Dependencias para formateo y linting:
+## 🧩 Módulos funcionales
 
-  - **prettier**: Prettier es un formateador de código que automáticamente aplica un estilo de código consistente a todo el proyecto. Esto mejora la legibilidad del código y facilita la colaboración entre desarrolladores.
-  - **eslint**: ESLint es una herramienta de linting que analiza el código fuente en busca de posibles errores y problemas de estilo. Ayuda a mantener un código de alta calidad y a prevenir errores comunes.
-  - **husky**: Husky es un hook para Git que permite ejecutar comandos personalizados antes o después de ciertos eventos de Git (por ejemplo, antes de hacer commit o antes de pushear). Se utiliza para automatizar tareas como linting, testing, etc.
-  - **lint-staged**: Esta herramienta se integra con Husky para ejecutar linters solo en los archivos que han cambiado antes de hacer commit. Esto mejora el rendimiento y evita que se ejecuten linters innecesariamente.
+### Autenticación
 
-- Dependencias para Interacción con la Nube:
+- Registro y login de usuarios
+- JWT y protección de rutas
+- Recuperación de contraseña vía email
 
-  - **@aws-sdk/client-s3**: Esta biblioteca proporciona una interfaz para interactuar con el servicio de almacenamiento en la nube de Amazon Web Services (AWS): Amazon S3. Con ella, puedes realizar diversas operaciones como subir, descargar, listar y eliminar archivos en tus buckets de S3. Es ideal para almacenar grandes volúmenes de datos de manera segura y escalable.
+### Gestión de usuarios
 
-## Módulos que contiene el proyecto
+- ABM completo
+- Roles: `SUPERADMIN`, `ADMIN`, `USER`
 
-- Módulo de autenticacion
-  - Login
-  - Registro de usuarios
-  - Recuperar contraseña
-- Modulo de usuarios
-  - Consultar todos los usuarios activos
-  - Crear un usuario
-  - Actualizar un usuario
-  - Eliminar un usuario
-- Módulo de mensajeria
-  - Envio de correo al recuperar contraseña
-- Decoradores para validacion de roles
-  - SUPERADMIN
-  - ADMIN
-  - USER
+### Productos
 
-# Pasos para levantar el proyecto
+- ABM de productos
+- Variantes por color/talle/género
+- Control de stock e imágenes
 
-### `Paso 1`: Instalacion de las dependencias.
+### Carrito y Checkout
 
-```bash
-$ yarn install
-```
+- Agregar/eliminar productos al carrito
+- Aplicación de cupones y cálculo de descuentos
+- Pago real con Mercado Pago
 
-### `Paso 2`: Crear en la raiz del proyecto el archivo .env.
+### Órdenes y puntos
 
-### `Paso 3`: Ejecutar el siguiente comando para crear la base de datos y poblarla con datos.
+- Generación de órdenes tras pago exitoso
+- Sistema de puntos acumulables
+- Historial de pedidos del usuario
 
-En nuestro package.json tenemos los siguientes scripts que nos ayudaran para esto:
+### Panel administrativo
 
-```javascript
-    // Genera archivos de migración basados en los cambios en el schema de Prisma.
-    "db:migrate": "npx prisma migrate dev",
+- Vista de métricas: ventas, usuarios, productos
+- Exportación de reportes a PDF
+- Gestión de productos, usuarios y órdenes
 
-    // Inserta los datos inicializados en la base de datos recién creada.
-    "db:seed": "npx prisma db seed",
+---
 
-    // Aplica las migraciones pendientes a la base de datos. Elimina la base de datos existente si hay conflictos de migración. Crea una nueva base de datos si no existe.
-    "db:create": "npx prisma db push --force-reset && npx prisma db seed"
-```
+## 🚀 Pasos para levantar el proyecto
 
-En esta caso nosotros ejecutaremos el siguiente comando:
-
-```bash
-$ yarn db:create
-```
-
-### `Paso 4`: Levantar la aplicacion.
+### 🧰 1. Clonar el proyecto
 
 ```bash
-# development
-$ yarn start
-
-# watch mode
-$ yarn start:dev
-
-# production mode
-$ yarn start:prod
+git clone https://github.com/tu-usuario/tu-repo.git
+cd tu-repo
 ```
 
-### `Paso 5`: Instalaciones necesarias.
+## 2. Instalar dependencias
 
-1. Instalar las siguientes extensiones en visual studio code
+- yarn install
 
-- Conventional Commits (vivaxy)
-- Prisma (Prisma)
+## ⚙️ 3. Crear el archivo .env en la raíz
 
-2. Instalar commitlint de manera global
+# ===============================
 
-```bash
-$ npm install -g @commitlint/cli @commitlint/config-conventional
-```
+# ========== SERVER ============
 
-### `Paso 6 (Commits)`: Se debera respetar la siguiente convencion a la hora de realizar un commit.
+# ===============================
 
-Instalaciones necesarias:
+PORT=4000
+NODE_ENV=dev
 
-Tipos de commit recomendados:
+# ===============================
 
-`feat`: Para agregar nuevas funcionalidades
+# ======== DATABASE ============
 
-`fix`: Para corregir bugs existentes
+# ===============================
 
-`docs`: Para cambios en la documentación
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/DATABASE_NAME
 
-`style`: Para cambios que afectan el estilo del código sin modificar su comportamiento
+# ===============================
 
-`refactor`: Para refactoring o reestructuración de código
+# ========== BCRYPT ============
 
-`test`: Para agregar pruebas
+# ===============================
 
-`chore`: Para tareas administrativas generales
+HASH_SALT=12
 
-Ejemplos de commits
+# ===============================
 
-```bash
-$ git commit -m "feat(auth): implementar autenticación JWT
-  Implementar sistema de autenticación basado en tokens JWT.
-  Añadir endpoints para login y registro.
-  Actualizar seguridad de sesiones.
-"
+# ============ JWT =============
 
-$ git commit -m "fix(database): solucionar error al actualizar productos
-  Error al actualizar precios de productos debido a un problema con la transacción.
-  Corregir lógica de actualización de inventario.
-  Añadir validaciones adicionales antes de realizar transacciones.
-"
-```
+# ===============================
 
-### `Paso 7 (Opcional)`: Ejecutar el siguiente comando para generar migraciones y le asignamos un nombre.
+JWT_SECRET_KEY=your_jwt_secret_key
+JWT_EXPIRES_IN=1d
 
-```bash
-$ yarn db:migrate --name init_db
-```
+JWT_REFRESH_SECRET_KEY=your_jwt_refresh_secret_key
+JWT_REFRESH_EXPIRES_IN=365d
 
-## Adicional: Comandos para levantar la aplicacion con docker-compose.
+JWT_RESET_SECRET_KEY=your_jwt_reset_secret_key
+JWT_RESET_EXPIRES_IN=10m
 
-### `Paso 1`: Crear la base de datos con docker-compose.
+# ===============================
 
-```bash
-$ docker-compose up -d
+# ========== MAILJET ===========
 
-# Verificar que los contenedores estén ejecutándose
-$ docker-compose ps
+# ===============================
 
-# Acceder al contenedor de tu aplicación
-$ docker-compose exec nestjs bash
+EMAIL_SENDER=youremail@example.com
+MAILJET_API_KEY=your_mailjet_api_key
+MAILJET_SECRET_KEY=your_mailjet_secret_key
 
-# Verificar los logs
-$ docker-compose logs -f nestjs
-```
+BACKOFFICE_RESET_PASSWORD_URL=http://localhost:5173/cambiar-contraseña
+APP_RESET_PASSWORD_URL=com.example.app://reset-password
 
-### `Paso 2`: Conectarse a la base de datos con pgadmin4 en local.
+# ===============================
 
-- Ingresamos a pgamin y seleccionamos en `Servers` > `Register` > `Server`.
-- En el tab `General` agregamos en `Name` el nombre del servidor.
-- En el tab `Connection` agregamos:
-  - `Host name/address` el nombre del host en este caso puede ser `localhost` o en caso de que se quiera conectar a un contenedor ya creado se agregaria el nombre del servicio que los podemos encontrar en el archivo docker-compose.yml.
-  - `Port` agregamos el puerto que se agrego en el archivo docker-compose.yml.
-  - `Username` agregamos el usuario que se agrego en el archivo docker-compose.yml.
-  - `Password` agregamos la contraseña que se agrego en el archivo docker-compose.yml.
-- Por ultimo guardamos y verificamos si se muestra la base de datos que se creo con docker-compose.
+# ============ AWS =============
 
-### `Paso 3`: Conectarse a la base de datos con pgadmin4 en el navegador.
+# ===============================
 
-- Para poder probar pgadmin, en el navegador ponemos localhost:80 y se nos cargara la pagina para ingresar email y password. Una vez estamos adentro seguimos las mismas instrucciones del `Paso 4`.
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=us-east-2
+S3_BUCKET=your_bucket_name
 
-## Adicional: Comandos para levantar la aplicacion con docker.
+# ===============================
 
-```bash
-# Construir la imagen de la aplicacion
-$ docker build -t nestjs-app-image .
+# ======= MERCADO PAGO =========
 
-# Construir la imagen de la aplicacion con el archivo Dockerfile.prod
-$ docker build -t nestjs-app-image -f Dockerfile.prod .
+# ===============================
 
-# Verificar la imagen construida
-$ docker images
+MERCADOPAGO_ACCESS_TOKEN=your_access_token
+MERCADOPAGO_CLIENT_ID=your_client_id
+MERCADOPAGO_SECRET_KEY=your_secret_key
+MERCADOPAGO_WEBHOOK_URL=https://your-webhook-url/api/v1/payments/mercadopago/webhook
 
-# Ejecuta el contenedor docker
-$ docker run -p 4001:4001 nestjs-app-image
-```
+# ===============================
+
+# ======= GOOGLE PLACES ========
+
+# ===============================
+
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+
+## 🛠️ 4. Crear y poblar la base de datos
+
+- yarn db:create
+
+## ▶️ 5. Levantar el servidor
+
+# Modo desarrollo
+
+- yarn start:dev
+
+# Modo producción
+
+- yarn start:prod
+
+## 🧪 Scripts adicionales útiles
+
+# Crear una migración con nombre personalizado
+
+yarn db:migrate --name init_schema
+
+# Ejecutar seed por separado
+
+yarn db:seed

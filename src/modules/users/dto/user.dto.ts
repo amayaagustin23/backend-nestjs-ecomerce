@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -28,6 +29,74 @@ class CreatePersonDto {
   @IsOptional()
   @IsString({ message: i18nValidationMessage('errors.validations.isString') })
   cuitOrDni?: string;
+}
+
+export class AddressDto {
+  @ApiPropertyOptional({
+    description: 'Calle del domicilio',
+    example: 'Ecuador',
+  })
+  @IsOptional()
+  @IsString({
+    message: i18nValidationMessage('errors.validations.isString'),
+  })
+  street?: string;
+
+  @ApiPropertyOptional({
+    description: 'Ciudad',
+    example: 'San Miguel de Tucumán',
+  })
+  @IsOptional()
+  @IsString({
+    message: i18nValidationMessage('errors.validations.isString'),
+  })
+  city?: string;
+
+  @ApiPropertyOptional({
+    description: 'Provincia',
+    example: 'Tucumán',
+  })
+  @IsOptional()
+  @IsString({
+    message: i18nValidationMessage('errors.validations.isString'),
+  })
+  province?: string;
+
+  @ApiPropertyOptional({
+    description: 'Código postal',
+    example: 'T4001',
+  })
+  @IsOptional()
+  @IsString({
+    message: i18nValidationMessage('errors.validations.isString'),
+  })
+  postalCode?: string;
+
+  @ApiPropertyOptional({
+    description: 'Latitud geográfica',
+    example: -26.7991021,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage('errors.validations.isNumber'),
+    },
+  )
+  lat?: number;
+
+  @ApiPropertyOptional({
+    description: 'Longitud geográfica',
+    example: -65.2436467,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage('errors.validations.isNumber'),
+    },
+  )
+  lng?: number;
 }
 
 export class RegisterUserDto {
@@ -58,6 +127,12 @@ export class RegisterUserDto {
   @ValidateNested()
   @Type(() => CreatePersonDto)
   person: CreatePersonDto;
+
+  @ApiProperty({ type: () => AddressDto, required: false })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address?: AddressDto;
 }
 
 class UpdatePersonDto {
@@ -108,6 +183,18 @@ export class RecoverPasswordDto {
 }
 
 export class ResetPasswordDto {
+  @ApiProperty({
+    description: 'Reset token',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  @IsString({
+    message: i18nValidationMessage('errors.validations.isString'),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('errors.validations.isNotEmpty'),
+  })
+  token: string;
+
   @ApiProperty({
     description: 'User password',
     example: 'Pass1234',

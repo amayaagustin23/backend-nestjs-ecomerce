@@ -20,6 +20,26 @@ export type I18nTranslations = {
         };
         "changePassword": string;
         "sendEmailURL": string;
+        "registerEmail": {
+            "subject": string;
+            "body": string;
+        };
+        "notificationCartActive": {
+            "subject": string;
+            "body": string;
+        };
+        "paymentApproved": {
+            "subject": string;
+            "body": string;
+        };
+        "paymentPending": {
+            "subject": string;
+            "body": string;
+        };
+        "paymentCancelled": {
+            "subject": string;
+            "body": string;
+        };
     };
     "errors": {
         "validations": {
@@ -35,15 +55,38 @@ export type I18nTranslations = {
             "samePassword": string;
             "requiredField": string;
             "passwordComparison": string;
+            "cartEmpty": string;
         };
         "notFound": string;
         "conflict": string;
         "forbidden": string;
         "fileUpload": string;
         "emailNotRegistered": string;
+        "errorsMercadopago": {
+            "missingOrderId": string;
+            "paymentCompleted": string;
+            "mercadoPagoRequest": string;
+        };
+        "payments": {
+            "successfullyProcessed": string;
+            "cancelled": string;
+            "ignoredStatus": string;
+            "processingError": string;
+        };
+        "carts": {
+            "cartOrdered": string;
+        };
+        "stockUnavailable": string;
+        "CouponDisabled": string;
+        "CouponDisabledPromotion": string;
+        "couponAlreadyClaimed": string;
+        "couponExpired": string;
+        "insufficientPoints": string;
     };
     "translations": {
         "welcome": string;
+        "updated": string;
+        "deleted": string;
     };
 };
 /* prettier-ignore */
