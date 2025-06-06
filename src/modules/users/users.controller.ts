@@ -21,7 +21,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AddressDto, UpdateUserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
-@ApiTags('users')
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

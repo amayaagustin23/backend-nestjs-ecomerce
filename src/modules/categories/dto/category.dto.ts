@@ -66,6 +66,16 @@ export class UpdateCategoryDto {
   subcategories?: SubcategoryDto[];
 
   @ApiPropertyOptional({
+    type: [SubcategoryDto],
+    description: 'Subcategorías nuevas o actualizadas',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SubcategoryDto)
+  subcategoriesToUpdate?: SubcategoryDto[];
+
+  @ApiPropertyOptional({
     type: [String],
     description: 'IDs de subcategorías a eliminar',
     example: ['f9c8b5e4-67b2-4b9c-84b2-xxxxxxxxxxxx'],

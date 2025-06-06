@@ -15,6 +15,7 @@ export interface BasicUserInfo {
   phone?: string;
   cuitOrDni?: string;
   points: number;
+  isActive: boolean;
   addresses?: Address[];
 }
 
@@ -35,7 +36,6 @@ export interface ParsedProduct {
   brand: {
     id: string;
     name: string;
-    code: string;
   } | null;
   variants: {
     id: string;

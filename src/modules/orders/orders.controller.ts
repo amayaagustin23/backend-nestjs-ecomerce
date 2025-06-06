@@ -7,7 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { Role } from 'src/constants';
@@ -15,6 +15,7 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { OrdersService } from './orders.service';
 
+@ApiTags('orders')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}

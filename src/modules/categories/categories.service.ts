@@ -129,7 +129,13 @@ export class CategoriesService {
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
-    const { name, description, subcategories, subcategoriesToDelete } = dto;
+    const {
+      name,
+      description,
+      subcategories,
+      subcategoriesToDelete,
+      subcategoriesToUpdate,
+    } = dto;
 
     const categoryUsed = await this.prisma.product.findFirst({
       where: { categoryId: id },
@@ -151,6 +157,20 @@ export class CategoriesService {
         ...(description && { description }),
       },
     });
+
+    if (subcategoriesToUpdate?.length) {
+      const operations = subcategoriesToUpdate.map((sub) => {
+        return this.prisma.category.update({
+          where: { id: sub.id },
+          data: {
+            name: sub.name,
+            description: sub.description,
+          },
+        });
+      });
+
+      await Promise.all(operations);
+    }
 
     if (subcategoriesToDelete?.length) {
       await this.prisma.category.deleteMany({

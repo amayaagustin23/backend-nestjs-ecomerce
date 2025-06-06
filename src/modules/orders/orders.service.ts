@@ -34,7 +34,15 @@ export class OrdersService {
 
   async createOrderFromCart(cartId: string, userId: string) {
     const cart = await this.cart.findUnique({
-      where: { id: cartId, status: CartStatus.ACTIVE },
+      where: {
+        id: cartId,
+        OR: [
+          { status: CartStatus.ACTIVE },
+          { status: CartStatus.PENDING_PAYMENT },
+          { status: CartStatus.PAYMENT_FAILED },
+          { status: CartStatus.ABANDONED },
+        ],
+      },
       include: {
         coupon: true,
         items: {
@@ -49,6 +57,10 @@ export class OrdersService {
     if (!cart) {
       throw new NotFoundException(this.i18n.t('errors.carts.cartOrdered'));
     }
+    await this.cart.update({
+      where: { id: cartId },
+      data: { status: CartStatus.PENDING_PAYMENT },
+    });
 
     if (cart.items.length === 0) {
       throw new BadRequestException(
