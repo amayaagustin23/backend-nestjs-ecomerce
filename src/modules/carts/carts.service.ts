@@ -446,7 +446,7 @@ export class CartsService {
     for (const cart of cartsByActive) {
       await this.cart.update({
         where: { id: cart.id },
-        data: { status: CartStatus.EXPIRED },
+        data: { status: CartStatus.ABANDONED },
       });
     }
   }

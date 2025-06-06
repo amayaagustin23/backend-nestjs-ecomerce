@@ -11,6 +11,7 @@ export class PanelService {
     private prisma: PrismaService,
     private readonly i18n: I18nService,
   ) {}
+
   async dashboard() {
     const ordersCountPaid = await this.prisma.order.count({
       where: { status: OrderStatus.PAID },
@@ -183,5 +184,45 @@ export class PanelService {
       },
       pagination,
     );
+  }
+
+  async findOrderByUserId(userId: string) {
+    return await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        person: true,
+        addresses: true,
+        orders: {
+          include: {
+            items: {
+              include: {
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                    category: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
+                variant: {
+                  select: {
+                    id: true,
+                    size: true,
+                    color: true,
+                  },
+                },
+              },
+            },
+            payment: true,
+            shippingInfo: true,
+          },
+        },
+      },
+    });
   }
 }

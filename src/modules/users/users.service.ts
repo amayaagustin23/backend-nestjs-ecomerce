@@ -399,12 +399,13 @@ export class UsersService {
   ): Promise<Partial<BasicUserInfo>> {
     if (!user) return {};
 
-    const { id, email, role, person, addresses, points } = user;
+    const { id, email, role, person, addresses, points, isActive } = user;
 
     return {
       id,
       email,
       role,
+      isActive,
       name: person?.name,
       phone: person?.phone,
       cuitOrDni: person?.cuitOrDni,

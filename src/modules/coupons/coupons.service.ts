@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CouponStatus, CouponType } from '@prisma/client';
+import { CouponStatus, CouponType, Prisma } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
+import { paginatePrisma } from 'src/common/pagination';
+import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { PrismaService } from 'src/services/prisma/prisma.service';
+import { parseDateToRange } from 'src/utils/parsers';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
 
 @Injectable()
@@ -17,8 +20,27 @@ export class CouponsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.coupon.findMany();
+  async findAll(pagination: PaginationArgs) {
+    const { search, date, startDate, endDate } = pagination;
+
+    const dateFilter = date
+      ? parseDateToRange(date)
+      : startDate && endDate
+        ? { gte: startDate, lte: endDate }
+        : undefined;
+
+    const where: Prisma.CouponWhereInput = {
+      ...(search && {
+        name: { contains: search, mode: 'insensitive' },
+      }),
+      ...(dateFilter && { createdAt: dateFilter }),
+    };
+
+    if (pagination.page && pagination.size) {
+      return await paginatePrisma(this.prisma.coupon, { where }, pagination);
+    } else {
+      return await this.prisma.coupon.findMany({ where });
+    }
   }
 
   async findOne(id: string) {

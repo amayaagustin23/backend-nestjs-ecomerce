@@ -72,7 +72,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('API')
-    .setDescription('Nestjs Base Template')
+    .setDescription('Ecomerce Portfolio API Documentation')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

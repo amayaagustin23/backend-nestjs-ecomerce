@@ -14,6 +14,7 @@ export const paginatePrisma = async <
     where?: Where;
     skip?: number;
     take?: number;
+    orderBy?: any;
   },
 >(
   model: {
@@ -28,13 +29,16 @@ export const paginatePrisma = async <
   const skip = (page - 1) * size;
   const take = size;
 
+  const finalArgs: Args = {
+    ...args,
+    skip,
+    take,
+    orderBy: args.orderBy ?? { createdAt: 'desc' },
+  } as Args;
+
   const [total, data] = await Promise.all([
     model.count({ where: args.where }),
-    model.findMany({
-      ...args,
-      skip,
-      take,
-    } as Args),
+    model.findMany(finalArgs),
   ]);
 
   return {

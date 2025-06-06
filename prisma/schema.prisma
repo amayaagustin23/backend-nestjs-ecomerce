@@ -68,6 +68,11 @@ enum CartStatus {
   EXPIRED
   ORDERED
   CANCELLED
+  ABANDONED
+  CHECKED_OUT
+  COMPLETED
+  PENDING_PAYMENT
+  PAYMENT_FAILED
 }
 
 enum CouponStatus {
@@ -95,6 +100,7 @@ model User {
   points    Int          @default(0)
   createdAt DateTime     @default(now())
   isDeleted Boolean      @default(false)
+  isActive  Boolean      @default(true)
   favorites FavoriteProduct[]
 }
 
@@ -116,6 +122,9 @@ model Person {
   cuitOrDni String?
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 model Address {
@@ -130,6 +139,9 @@ model Address {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   shippingInfos ShippingInfo[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 model Product {
@@ -149,8 +161,9 @@ model Product {
   cartItems       CartItem[]
   variants        ProductVariant[]
   favoritedBy FavoriteProduct[]
-  createdAt       DateTime         @default(now())
-  isDeleted      Boolean          @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 model ProductVariant {
@@ -163,6 +176,9 @@ model ProductVariant {
   product   Product  @relation(fields: [productId], references: [id])
   cartItems CartItem[]
   orderItems OrderItem[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 
 }
 
@@ -183,20 +199,27 @@ model Category {
   parent      Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryToParent")
   products    Product[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 model Brand {
   id          String     @id @default(uuid())
   name        String     @unique
-  code        String?
   products    Product[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 model EcommerceConfig {
   id            String   @id @default(uuid())
   type          EcommerceType
   industry      IndustryType
-  createdAt     DateTime @default(now())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 model Coupon {
@@ -212,7 +235,9 @@ model Coupon {
   parents     UserCoupon[]  @relation("UserCouponParent")
   cart        Cart?
   order       Order?
-  createdAt   DateTime      @default(now())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 model UserCoupon {
@@ -225,7 +250,9 @@ model UserCoupon {
   user            User       @relation(fields: [userId], references: [id])
   coupon  Coupon     @relation("UserCouponAssigned", fields: [couponId], references: [id])
   parentCoupon    Coupon?     @relation("UserCouponParent", fields: [parentCouponId], references: [id])
-
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
   @@id([userId, couponId])
 }
 
@@ -236,7 +263,9 @@ model Cart {
   userId    String
   user      User       @relation(fields: [userId], references: [id])
   items     CartItem[]
-  createdAt DateTime   @default(now())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
   couponId  String?    @unique 
   coupon    Coupon?    @relation(fields: [couponId], references: [id])
 }
@@ -250,6 +279,9 @@ model CartItem {
   unitPrice  Float
   discount   Float?
   finalPrice Float
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
   cart       Cart            @relation(fields: [cartId], references: [id])
   product    Product         @relation(fields: [productId], references: [id])
   variant    ProductVariant? @relation(fields: [variantId], references: [id])
@@ -266,7 +298,9 @@ model Order {
   total            Float
   subtotal         Float
   shippingCost     Float
-  createdAt        DateTime      @default(now())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
   paymentConfirmed DateTime?
   couponId  String?    @unique 
   coupon    Coupon?    @relation(fields: [couponId], references: [id])
@@ -284,6 +318,9 @@ model OrderItem {
   product    Product  @relation(fields: [productId], references: [id])
   variantId  String
   variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
 }
 
 
@@ -299,9 +336,9 @@ model Payment {
   mpStatusDetail      String?
   mpExternalReference String?
   mpPreferenceId      String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
   order Order @relation(fields: [orderId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 }
@@ -323,9 +360,10 @@ model ShippingInfo {
   estimatedDeliveryDate DateTime
   shippedAt             DateTime?
   deliveredAt           DateTime?
-  createdAt             DateTime @default(now())
   addressId             String?
   addressRef            Address? @relation(fields: [addressId], references: [id])
-
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isDeleted Boolean      @default(false)
   order Order @relation(fields: [orderId], references: [id])
 }

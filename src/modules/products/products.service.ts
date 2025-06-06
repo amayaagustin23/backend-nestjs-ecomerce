@@ -549,7 +549,6 @@ export class ProductsService {
         ? {
             id: product.brand.id,
             name: product.brand.name,
-            code: product.brand.code,
           }
         : null,
       variants:
