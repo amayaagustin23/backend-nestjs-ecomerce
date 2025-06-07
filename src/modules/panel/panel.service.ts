@@ -4,6 +4,7 @@ import { I18nService } from 'nestjs-i18n';
 import { paginatePrisma } from 'src/common/pagination';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { PrismaService } from 'src/services/prisma/prisma.service';
+import { formatDate } from 'src/utils/parsers';
 
 @Injectable()
 export class PanelService {
@@ -13,14 +14,49 @@ export class PanelService {
   ) {}
 
   async dashboard() {
-    const ordersCountPaid = await this.prisma.order.count({
-      where: { status: OrderStatus.PAID },
-    });
-    const usersCount = await this.prisma.user.count({
-      where: { isDeleted: false },
-    });
-    const productsCount = await this.prisma.product.count();
+    const [orderItems, ordersCountPaid, usersCount, productsCount] =
+      await Promise.all([
+        this.prisma.orderItem.findMany({
+          where: { order: { status: OrderStatus.PAID } },
+          include: { product: true },
+        }),
+        this.prisma.order.count({ where: { status: OrderStatus.PAID } }),
+        this.prisma.user.count({ where: { isDeleted: false } }),
+        this.prisma.product.count(),
+      ]);
 
+    // --- Ganancias e ingresos ---
+    let totalProfit = 0;
+    let totalRevenue = 0;
+    const profitsByProduct: Record<string, number> = {};
+
+    orderItems.forEach((item) => {
+      const revenue = item.unitPrice * item.quantity;
+      const cost = item.product.priceList * item.quantity;
+      const profit = revenue - cost;
+
+      totalProfit += profit;
+      totalRevenue += revenue;
+
+      profitsByProduct[item.productId] =
+        (profitsByProduct[item.productId] || 0) + profit;
+    });
+
+    const averageOrderValue =
+      ordersCountPaid > 0 ? totalRevenue / ordersCountPaid : 0;
+
+    // --- Recompradores ---
+    const repeatBuyers = await this.prisma.order.groupBy({
+      by: ['userId'],
+      where: { status: OrderStatus.PAID },
+      _count: { userId: true },
+      having: { userId: { _count: { gt: 1 } } },
+    });
+    const repeatPurchaseRate =
+      usersCount > 0 ? repeatBuyers.length / usersCount : 0;
+    const customerLifetimeValue = averageOrderValue * repeatPurchaseRate;
+
+    // --- Productos más vendidos ---
     const productsMostSold = await this.prisma.orderItem.groupBy({
       by: ['productId'],
       _sum: { quantity: true },
@@ -44,58 +80,54 @@ export class PanelService {
       };
     });
 
+    // --- Productos más rentables ---
+    const topProfitableProducts = Object.entries(profitsByProduct)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([productId, profit]) => {
+        const product = products.find((p) => p.id === productId);
+        return {
+          id: product?.id,
+          name: product?.name,
+          profit,
+        };
+      });
+
+    // --- Cupones más usados ---
     const couponsMostUsed = await this.prisma.userCoupon.groupBy({
       by: ['parentCouponId'],
-      _count: {
-        parentCouponId: true,
-      },
-      orderBy: {
-        _count: {
-          parentCouponId: 'desc',
-        },
-      },
+      _count: { parentCouponId: true },
+      orderBy: { _count: { parentCouponId: 'desc' } },
       take: 5,
-      where: {
-        parentCouponId: {
-          not: null,
-        },
-      },
+      where: { parentCouponId: { not: null } },
     });
-    const parentCouponIds = couponsMostUsed.map((c) => c.parentCouponId);
 
+    const parentCouponIds = couponsMostUsed.map((c) => c.parentCouponId);
     const coupons = await this.prisma.coupon.findMany({
-      where: {
-        id: { in: parentCouponIds },
-      },
-      select: {
-        id: true,
-        description: true,
-        code: true,
-      },
+      where: { id: { in: parentCouponIds } },
+      select: { id: true, description: true, code: true },
     });
-    const result = couponsMostUsed.map((c) => {
-      const couponInfo = coupons.find((cp) => cp.id === c.parentCouponId);
+
+    const couponsUsedReport = couponsMostUsed.map((c) => {
+      const coupon = coupons.find((cp) => cp.id === c.parentCouponId);
       return {
-        id: couponInfo?.id,
-        description: couponInfo?.description,
-        code: couponInfo?.code,
+        id: coupon?.id,
+        description: coupon?.description,
+        code: coupon?.code,
         total: c._count.parentCouponId,
       };
     });
+
+    // --- Órdenes por día ---
     const orderListForDaysRaw = await this.prisma.order.findMany({
-      where: {
-        status: OrderStatus.PAID,
-      },
+      where: { status: OrderStatus.PAID },
       select: { createdAt: true },
       orderBy: { createdAt: 'asc' },
     });
 
     const orderCountByDate: Record<string, number> = {};
-
     orderListForDaysRaw.forEach((item) => {
-      const date = item.createdAt.toLocaleDateString('sv-SE', {
-        timeZone: 'America/Argentina/Buenos_Aires',
-      });
+      const date = formatDate(item.createdAt);
       orderCountByDate[date] = (orderCountByDate[date] || 0) + 1;
     });
 
@@ -106,35 +138,43 @@ export class PanelService {
       }),
     );
 
-    const cartsByStatus = await this.prisma.cart.groupBy({
-      by: ['status'],
-      _count: { status: true },
-    });
+    // --- Estado de carritos y pagos ---
+    const [cartsByStatus, paymentsByStatus] = await Promise.all([
+      this.prisma.cart.groupBy({ by: ['status'], _count: { status: true } }),
+      this.prisma.payment.groupBy({ by: ['status'], _count: { status: true } }),
+    ]);
+
     const cartStatusReport = cartsByStatus.map((item) => ({
       status: item.status,
       count: item._count.status,
     }));
 
-    const paymentsByStatus = await this.prisma.payment.groupBy({
-      by: ['status'],
-      _count: {
-        status: true,
-      },
-    });
     const paymentStatusReport = paymentsByStatus.map((item) => ({
       status: item.status,
       count: item._count.status,
     }));
 
     return {
-      ordersCountPaid,
-      usersCount,
-      productsCount,
-      productsMostSoldWithDetails,
-      couponsMostUsed: result,
-      orderListForDays,
-      cartStatusReport,
-      paymentStatusReport,
+      kpis: {
+        totalProfit,
+        totalRevenue,
+        ordersCountPaid,
+        usersCount,
+        productsCount,
+        averageOrderValue,
+        repeatPurchaseRate,
+        customerLifetimeValue,
+      },
+      reports: {
+        orderListForDays,
+        cartStatusReport,
+        paymentStatusReport,
+      },
+      highlights: {
+        productsMostSoldWithDetails,
+        topProfitableProducts,
+        couponsMostUsed: couponsUsedReport,
+      },
     };
   }
 

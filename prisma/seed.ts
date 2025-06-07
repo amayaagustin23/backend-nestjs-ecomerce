@@ -367,10 +367,15 @@ async function main() {
       (c: any) => c.name === prod.subcategoria,
     );
 
+    const offerPrice = Number(
+      (prod.price * faker.number.float({ min: 0.7, max: 0.95 })).toFixed(2),
+    );
+
     const product = await prisma.product.create({
       data: {
         name: prod.name,
         description: faker.commerce.productDescription(),
+        priceList: offerPrice,
         price: prod.price,
         isService: false,
         isActive: true,

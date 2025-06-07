@@ -42,6 +42,13 @@ export class CreateProductDto {
   @IsNumber()
   price: number;
 
+  @ApiProperty({
+    example: 5999.99,
+    description: 'Precio de lista del producto',
+  })
+  @IsNumber()
+  priceList: number;
+
   @ApiProperty({ example: false, description: 'Si es un servicio o no' })
   @IsString()
   isService: string;

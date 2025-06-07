@@ -148,6 +148,7 @@ model Product {
   id              String           @id @default(uuid())
   name            String           @unique
   description     String
+  priceList       Float
   price           Float
   isService       Boolean          @default(false)
   isActive        Boolean          @default(true)
@@ -246,7 +247,6 @@ model UserCoupon {
   parentCouponId  String?
   assignedAt      DateTime   @default(now())
   enabled         Boolean    @default(true)
-
   user            User       @relation(fields: [userId], references: [id])
   coupon  Coupon     @relation("UserCouponAssigned", fields: [couponId], references: [id])
   parentCoupon    Coupon?     @relation("UserCouponParent", fields: [parentCouponId], references: [id])
