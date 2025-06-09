@@ -40,6 +40,7 @@ export class PaymentsService {
       const payment = await this.mercadopagoService.getPayment(paymentId);
 
       const orderId = payment.metadata?.order_id;
+      const cartId = payment.metadata?.cart_id;
       if (!orderId) {
         throw new Error(this.i18n.t('errors.errorsMercadopago.missingOrderId'));
       }
@@ -49,7 +50,17 @@ export class PaymentsService {
         include: {
           payment: true,
           user: { include: { person: true } },
-          items: { include: { product: true, variant: true } },
+          items: {
+            include: {
+              product: true,
+              variant: {
+                include: {
+                  size: true,
+                  color: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -60,7 +71,7 @@ export class PaymentsService {
       }
 
       const cart = await this.cart.findFirst({
-        where: { userId: order.userId, status: CartStatus.ACTIVE },
+        where: { id: cartId },
         include: { coupon: true, user: true },
       });
       await this.messagingService.sendPaymentStatusEmail({
@@ -76,7 +87,12 @@ export class PaymentsService {
           if (cart) {
             if (cart.coupon) {
               const userCouponFound = await this.prisma.userCoupon.findFirst({
-                where: { couponId: cart.couponId, userId: cart.userId },
+                where: {
+                  OR: [
+                    { couponId: cart.couponId, userId: cart.userId },
+                    { parentCouponId: cart.couponId, userId: cart.userId },
+                  ],
+                },
               });
               if (userCouponFound) {
                 await this.prisma.userCoupon.updateMany({

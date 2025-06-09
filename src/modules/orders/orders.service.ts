@@ -137,7 +137,17 @@ export class OrdersService {
       },
       include: {
         user: { include: { person: true } },
-        items: { include: { product: true, variant: true } },
+        items: {
+          include: {
+            product: true,
+            variant: {
+              include: {
+                color: true,
+                size: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -150,6 +160,7 @@ export class OrdersService {
         total,
         subtotal,
         shippingCost,
+        cartId,
         couponValue: couponPercentage,
       },
     });
@@ -258,8 +269,6 @@ export class OrdersService {
     }
 
     const estimatedDeliveryDate = moment().add(deliveryDays, 'days').toDate();
-    console.log(estimatedDeliveryDate);
-    console.log(shippingCost);
 
     return { shippingCost, estimatedDeliveryDate };
   }

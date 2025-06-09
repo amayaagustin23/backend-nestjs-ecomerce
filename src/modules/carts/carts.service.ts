@@ -387,7 +387,7 @@ export class CartsService {
           category: { id: item.product.categoryId },
           variants: {
             some: {
-              OR: [{ size: variant.size }, { color: variant.color }],
+              OR: [{ sizeId: variant.sizeId }, { colorId: variant.colorId }],
             },
           },
         },

@@ -114,6 +114,10 @@ export class UpdateProductVariantDto {
   @IsString()
   color: string;
 
+  @ApiProperty({ example: 'Unisex' })
+  @IsString()
+  gender: string;
+
   @ApiProperty({ example: 10 })
   @IsNumber()
   stock: number;

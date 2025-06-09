@@ -209,6 +209,12 @@ export class PanelService {
                       name: true,
                     },
                   },
+                  brand: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
                 },
               },
               variant: {
@@ -217,6 +223,7 @@ export class PanelService {
                   size: true,
                   color: true,
                   gender: true,
+                  images: true,
                 },
               },
             },

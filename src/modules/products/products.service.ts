@@ -8,9 +8,10 @@ import {
   Brand,
   Category,
   FavoriteProduct,
+  Image,
+  ImageType,
   Prisma,
   Product,
-  ProductImage,
   ProductVariant,
 } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
@@ -50,6 +51,7 @@ export class ProductsService {
   async create(body: CreateProductDto, files?: Express.Multer.File[]) {
     const { variants: variantsRaw, categoryId, brandId, ...rest } = body;
     let variants = [];
+
     if (variantsRaw) {
       try {
         variants = JSON.parse(variantsRaw as unknown as string);
@@ -83,20 +85,48 @@ export class ProductsService {
           variants: variants?.length
             ? {
                 create: variants.map((variant) => ({
-                  size: variant.size,
-                  color: variant.color,
+                  size: variant.size
+                    ? { connect: { id: variant.size } }
+                    : undefined,
+                  color: variant.color
+                    ? { connect: { id: variant.color } }
+                    : undefined,
                   stock: variant.stock,
+                  gender: variant.gender,
+                  images: variant.image
+                    ? {
+                        create: [
+                          {
+                            url: variant.image,
+                            order: 0,
+                            type: 'PRODUCT',
+                          },
+                        ],
+                      }
+                    : imageInputs.length
+                      ? {
+                          create: imageInputs.map((img) => ({
+                            ...img,
+                            type: 'PRODUCT',
+                          })),
+                        }
+                      : undefined,
                 })),
               }
             : undefined,
           images: imageInputs.length
             ? {
-                create: imageInputs,
+                create: imageInputs.map((img) => ({
+                  ...img,
+                  type: 'PRODUCT',
+                })),
               }
             : undefined,
         },
         include: {
-          variants: true,
+          variants: {
+            include: { images: true },
+          },
           images: true,
           category: { include: { children: true } },
           brand: true,
@@ -110,6 +140,7 @@ export class ProductsService {
         }
         throw e;
       });
+
     return this.mapToParsedProduct(product);
   }
 
@@ -199,16 +230,32 @@ export class ProductsService {
       ...(parsedBrandIds.length > 0 && { brandId: { in: parsedBrandIds } }),
 
       ...(parsedVariants.length > 0 && {
-        variants: {
-          some: {
-            stock: { gt: 0 },
-            OR: [
-              { color: { in: parsedVariants } },
-              { size: { in: parsedVariants } },
-              { gender: { in: parsedVariants } },
-            ],
+        OR: [
+          {
+            variants: {
+              some: {
+                stock: { gt: 0 },
+                color: { id: { in: parsedVariants } },
+              },
+            },
           },
-        },
+          {
+            variants: {
+              some: {
+                stock: { gt: 0 },
+                size: { id: { in: parsedVariants } },
+              },
+            },
+          },
+          {
+            variants: {
+              some: {
+                stock: { gt: 0 },
+                gender: { id: { in: parsedVariants } },
+              },
+            },
+          },
+        ],
       }),
     };
     const paginated = await paginatePrisma(
@@ -217,7 +264,9 @@ export class ProductsService {
         where,
         include: {
           ...(userId && { favoritedBy: true }),
-          variants: true,
+          variants: {
+            include: { color: true, size: true, gender: true, images: true },
+          },
           images: true,
           category: { include: { children: true } },
           brand: true,
@@ -238,7 +287,9 @@ export class ProductsService {
       where: { id },
       include: {
         favoritedBy: true,
-        variants: true,
+        variants: {
+          include: { color: true, size: true, gender: true, images: true },
+        },
         images: true,
         category: { include: { children: true } },
         brand: true,
@@ -259,8 +310,6 @@ export class ProductsService {
     body: UpdateProductDto,
     files?: Express.Multer.File[],
   ) {
-    console.log(body);
-
     const {
       variants,
       variantsToDelete,
@@ -298,6 +347,7 @@ export class ProductsService {
               url: await this.uploadService.upload(file),
               order: index,
               description: '',
+              type: ImageType.VARIANT,
             })),
           )
         : [];
@@ -349,10 +399,21 @@ export class ProductsService {
       });
     if (parsedVariantsToUpdate.length) {
       for (const variant of parsedVariantsToUpdate) {
-        const { id, ...rest } = variant;
+        const { id, size, color, gender, ...rest } = variant;
         await this.prisma.productVariant.update({
           where: { id },
-          data: { ...rest },
+          data: {
+            ...rest,
+            ...(size && {
+              size: { connect: { id: size } },
+            }),
+            ...(color && {
+              color: { connect: { id: color } },
+            }),
+            ...(gender && {
+              gender: { connect: { id: gender } },
+            }),
+          },
         });
       }
     }
@@ -373,8 +434,12 @@ export class ProductsService {
           .update({
             where: { id: variant.id },
             data: {
-              size: variant.size,
-              color: variant.color,
+              size: variant.size
+                ? { connect: { id: variant.size } }
+                : undefined,
+              color: variant.color
+                ? { connect: { id: variant.color } }
+                : undefined,
               stock: variant.stock,
             },
           })
@@ -390,10 +455,17 @@ export class ProductsService {
         await this.prisma.productVariant
           .create({
             data: {
-              size: variant.size,
-              color: variant.color,
+              size: variant.size
+                ? { connect: { id: variant.size } }
+                : undefined,
+              color: variant.color
+                ? { connect: { id: variant.color } }
+                : undefined,
               stock: variant.stock,
-              productId: id,
+              gender: variant.gender
+                ? { connect: { id: variant.gender } }
+                : undefined,
+              product: { connect: { id } },
             },
           })
           .catch((e) => {
@@ -408,7 +480,7 @@ export class ProductsService {
     }
 
     if (parsedImagesToDelete.length) {
-      await this.prisma.productImage.deleteMany({
+      await this.prisma.image.deleteMany({
         where: {
           id: {
             in: parsedImagesToDelete,
@@ -422,36 +494,17 @@ export class ProductsService {
   }
 
   async getUniqueSizes() {
-    const variants = await this.prisma.productVariant.findMany({
-      distinct: ['size'],
-      select: {
-        size: true,
-      },
-    });
-
-    return variants.map((v) => v.size);
+    const sizes = await this.prisma.size.findMany();
+    return sizes;
   }
   async getUniqueColors() {
-    const variants = await this.prisma.productVariant.findMany({
-      distinct: ['color'],
-      select: {
-        color: true,
-      },
-    });
-
-    return variants.map((v) => v.color);
+    const colors = await this.prisma.color.findMany();
+    return colors;
   }
 
   async getUniqueGenders() {
-    const variants = await this.prisma.productVariant.findMany({
-      where: { gender: { not: null } },
-      distinct: ['gender'],
-      select: {
-        gender: true,
-      },
-    });
-
-    return variants.map((v) => v.gender);
+    const genders = await this.prisma.gender.findMany();
+    return genders;
   }
 
   async getAllBrands() {
@@ -501,11 +554,11 @@ export class ProductsService {
       );
     }
     if (product.images.length) {
-      await this.prisma.productImage.deleteMany({
+      await this.prisma.image.deleteMany({
         where: { productId: id },
       });
     }
-    await this.prisma.productImage.deleteMany({
+    await this.prisma.image.deleteMany({
       where: { productId: id },
     });
     await this.prisma.product.update({
@@ -522,7 +575,7 @@ export class ProductsService {
       };
       brand?: Brand | null;
       variants?: ProductVariant[];
-      images?: ProductImage[];
+      images?: Image[];
     },
   ): ParsedProduct {
     return {
@@ -551,19 +604,7 @@ export class ProductsService {
             name: product.brand.name,
           }
         : null,
-      variants:
-        product.variants?.map((v) => ({
-          id: v.id,
-          size: v.size,
-          color: v.color,
-          stock: v.stock,
-        })) ?? [],
-      images:
-        product.images?.map((i) => ({
-          id: i.id,
-          url: i.url,
-          order: i.order,
-        })) ?? [],
+      variants: product.variants,
     };
   }
 }

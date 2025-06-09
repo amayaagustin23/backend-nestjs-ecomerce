@@ -37,17 +37,7 @@ export interface ParsedProduct {
     id: string;
     name: string;
   } | null;
-  variants: {
-    id: string;
-    size: string | null;
-    color: string;
-    stock: number;
-  }[];
-  images: {
-    id: string;
-    url: string;
-    order: number;
-  }[];
+  variants: ProductVariant[];
 }
 
 export interface CategoryRaw {
@@ -74,7 +64,7 @@ export interface ExcelColumn {
 
 export interface OrderItemWithDetails extends OrderItem {
   product: Pick<Product, 'name'>;
-  variant: Pick<ProductVariant, 'size' | 'color'>;
+  variant: Pick<ProductVariant, 'sizeId' | 'colorId'>;
 }
 
 export interface OrderWithItems extends Order {

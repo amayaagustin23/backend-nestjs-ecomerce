@@ -93,7 +93,11 @@ export class CouponsService {
 
   async findUserCoupons(userId: string) {
     const coupons = await this.prisma.userCoupon.findMany({
-      where: { userId, coupon: { status: CouponStatus.REDEEMED } },
+      where: {
+        userId,
+        coupon: { status: CouponStatus.REDEEMED },
+        enabled: true,
+      },
       include: { coupon: true },
     });
     return coupons.map(({ coupon }) => coupon);

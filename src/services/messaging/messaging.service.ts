@@ -116,7 +116,7 @@ export class MessagingService {
 
         return `
           <div>
-            <strong>${item.product.name}</strong> - Talle: ${item.variant.size}, Color: ${item.variant.color}<br/>
+            <strong>${item.product.name}</strong> - Talle: ${item.variant.sizeId}, Color: ${item.variant.colorId}<br/>
             Cantidad: ${item.quantity} x 
             ${
               hasDiscount

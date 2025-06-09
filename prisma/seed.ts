@@ -1,31 +1,59 @@
 import { faker } from '@faker-js/faker';
-import { EcommerceType, IndustryType, PrismaClient } from '@prisma/client';
+import {
+  EcommerceType,
+  ImageType,
+  IndustryType,
+  PrismaClient,
+} from '@prisma/client';
 import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-type Producto = {
-  name: string;
-  price: number;
-  image: string;
-  color: string;
-  marca: string;
-  categoria: string;
-  subcategoria: string;
-  gender?: 'MALE' | 'FEMALE' | 'UNISEX';
-  sizes?: string[];
-};
+const PRODUCT_NAMES = [
+  'Zapatillas Running',
+  'Camiseta Técnica',
+  'Short Deportivo',
+  'Campera Impermeable',
+  'Gorra Deportiva',
+  'Mochila Deportiva',
+  'Botella Térmica',
+  'Medias Antideslizantes',
+  'Calzas Fitness',
+  'Top Deportivo',
+  'Buzo Training',
+  'Pantalón Jogger',
+  'Zapatillas Trail',
+  'Muñequeras',
+  'Cinturón de Hidratación',
+  'Lentes Deportivos',
+  'Guantes de Gimnasio',
+  'Banda Elástica',
+  'Pelota de Yoga',
+  'Esterilla de Yoga',
+  'Tobilleras',
+  'Riñonera Running',
+  'Chaqueta Rompeviento',
+  'Camiseta sin Mangas',
+  'Pantalón Corto',
+  'Camisa Outdoor',
+  'Remera Fitness',
+  'Pulsera Deportiva',
+  'Camiseta de Compresión',
+  'Calzado Indoor',
+  'Bolso Deportivo',
+  'Buzo Outdoor',
+];
 
 async function main() {
   const password = await hash('Pass1234', 10);
 
-  await prisma.ecommerceConfig.create({
+  const ecommerceConfig = await prisma.ecommerceConfig.create({
     data: {
       type: EcommerceType.PRODUCTOS,
-      industry: IndustryType.OTRO,
+      industry: IndustryType.ROPA,
       address: {
         create: {
-          street: 'Av. Ejemplo 123',
+          street: 'Av. Siempre Viva 742',
           city: 'San Miguel de Tucumán',
           province: 'Tucumán',
           postalCode: '4000',
@@ -37,395 +65,111 @@ async function main() {
     },
   });
 
-  const marcas = [
-    'Platinum',
-    'DormiLindo',
-    'Maison',
-    'Foschia',
-    'Casa Rosario',
-    'Yuhmak',
-    'Genoud',
-    'América Hogar',
-    'Atma',
-    'Llanos',
-    'Philips',
-    'Liliana',
-    'Inelro',
-    'Singer',
-    'Striker',
-    'Atlét',
-    'Vans',
-    'Adidas',
-    'Bullpadel',
-    'Topper',
-  ];
-
-  await prisma.brand.createMany({ data: marcas.map((name) => ({ name })) });
-  const brands = await prisma.brand.findMany();
-
-  const categorias = [
-    {
-      name: 'Hogar',
-      description: 'Artículos para el hogar',
-      subcategorias: [
-        { name: 'Placard' },
-        { name: 'Placard de pino' },
-        { name: 'Cómoda' },
-        { name: 'Aparador' },
-        { name: 'Ropero' },
-        { name: 'Mueble bajo para TV' },
-        { name: 'Silla' },
-        { name: 'Mesa de luz' },
-      ],
+  await prisma.image.create({
+    data: {
+      url: 'https://placehold.co/600x400?text=Ecommerce+Config',
+      description: 'Imagen principal del e-commerce',
+      order: 0,
+      type: ImageType.CONFIG,
+      configId: ecommerceConfig.id,
     },
-    {
-      name: 'Tecnologia',
-      description: 'Tecnología y electrodomésticos',
-      subcategorias: [
-        { name: 'Freidora de aire (6.5L)' },
-        { name: 'Freidora horno de aire (11.6L)' },
-        { name: 'Cocina multigas' },
-        { name: 'Caloventor' },
-        { name: 'Cuchilla para afeitadora' },
-        { name: 'Calefactor infrarrojo' },
-        { name: 'Heladera exhibidora' },
-        { name: 'Máquina de coser' },
-      ],
-    },
-    {
-      name: 'Deportes',
-      description: 'Ropa y artículos deportivos',
-      subcategorias: [
-        { name: 'Pelota de básquet Nº 7' },
-        { name: 'Buzo deportivo' },
-        { name: 'Zapatillas urbanas' },
-        { name: 'Campera técnica' },
-        { name: 'Paleta de pádel' },
-        { name: 'Botines de fútbol sintético' },
-        { name: 'Botines de fútbol' },
-      ],
-    },
-  ];
+  });
 
-  const categoriaMap: Record<string, any> = {};
-
-  for (const c of categorias) {
-    const created = await prisma.category.create({
+  for (let i = 1; i <= 3; i++) {
+    const banner = await prisma.ecommerceBanner.create({
       data: {
-        name: c.name,
-        description: c.description,
-        children: {
-          create: c.subcategorias.map((s) => ({
-            name: s.name,
-            description: s.name,
-          })),
-        },
+        title: `Banner ${i}`,
+        subtitle: 'Subtítulo del banner',
+        link: '/',
+        configId: ecommerceConfig.id,
       },
-      include: { children: true },
     });
-    categoriaMap[c.name] = created;
+
+    await prisma.image.create({
+      data: {
+        url: `https://placehold.co/1200x400?text=Banner+${i}`,
+        description: `Imagen del banner ${i}`,
+        order: i - 1,
+        type: ImageType.BANNER,
+        bannerId: banner.id,
+      },
+    });
   }
 
-  const productos: Producto[] = [
-    {
-      name: 'Placard 6 Puertas',
-      price: 4631,
-      image:
-        'https://lidermuebles.com.ar/wp-content/uploads/2021/06/272-01-VE.png',
-      color: '#FFFFFF', // Blanco
-      marca: 'Platinum',
-      categoria: 'Hogar',
-      subcategoria: 'Placard',
-    },
-    {
-      name: 'Placard de Pino 2 Puertas',
-      price: 8635,
-      image:
-        'https://www.dormilindo.com/wp-content/uploads/2023/09/Blanco-17.png',
-      color: '#FFFFFF', // Blanco
-      marca: 'DormiLindo',
-      categoria: 'Hogar',
-      subcategoria: 'Placard de pino',
-    },
-    {
-      name: 'Cómoda 6 Cajones',
-      price: 2739,
-      image:
-        'https://www.el-mueble.com.ar/showroom/wp-content/uploads/2020/06/Co%CC%81moda-Maison-8-cajones-1-1.jpg',
-      color: '#FFFFFF', // Blanco (primer color de "Blanco/Roble/Miel")
-      marca: 'Maison',
-      categoria: 'Hogar',
-      subcategoria: 'Cómoda',
-    },
-    {
-      name: 'Despensero 2 Puertas',
-      price: 1309,
-      image:
-        'https://d2eebw31vcx88p.cloudfront.net/foschiads/uploads/a399255d8dcc04df846c829c333e923258494372.jpg',
-      color: '#FFFFFF', // Blanco (primer color de "Blanco con detalles madera")
-      marca: 'Foschia',
-      categoria: 'Hogar',
-      subcategoria: 'Aparador',
-    },
-    {
-      name: 'Placard Venezia 4 Puertas',
-      price: 4169,
-      image:
-        'https://casarosario.com.ar/wp-content/uploads/2020/06/916-TABACO.png',
-      color: '#A0522D', // Tabaco (aproximación)
-      marca: 'Casa Rosario',
-      categoria: 'Hogar',
-      subcategoria: 'Ropero',
-    },
-    {
-      name: 'Mueble Bajo para TV',
-      price: 3696,
-      image:
-        'https://yuhmak.vtexassets.com/arquivos/ids/179196/E0000019455--2-.png?v=638342958168930000',
-      color: '#FFFFFF', // Blanco (primer color de "Blanco con detalles grises")
-      marca: 'Yuhmak',
-      categoria: 'Hogar',
-      subcategoria: 'Mueble bajo para TV',
-    },
-    {
-      name: 'Silla Mediterránea',
-      price: 1529,
-      image:
-        'https://genoudmuebles.com.ar/contenidos/productos/640/img/big/GND-Silla-Sapporo-001.jpg',
-      color: '#A0522D', // Madera natural (aproximación)
-      marca: 'Genoud',
-      categoria: 'Hogar',
-      subcategoria: 'Silla',
-    },
-    {
-      name: 'Mesa de Luz 3 Cajones',
-      price: 2189,
-      image:
-        'https://www.mueblesamerica.mx/img/1024/1024/resize/P/E/PEHE00005_x1.jpg',
-      color: '#FFFFFF', // Blanco mate (asumiendo blanco)
-      marca: 'América Hogar',
-      categoria: 'Hogar',
-      subcategoria: 'Mesa de luz',
-    },
-    {
-      name: 'Freidora De Aire 6.5L',
-      price: 1199,
-      image:
-        'https://www.megatone.net/Images/Articulos/zoom/501/FRE0600ATM.jpg?version=35',
-      color: '#000000', // Negro
-      marca: 'Atma',
-      categoria: 'Tecnologia',
-      subcategoria: 'Freidora de aire (6.5L)',
-    },
-    {
-      name: 'Freidora Horno 11.6L',
-      price: 1599,
-      image:
-        'https://www.megatone.net/Images/Articulos/zoom/501/FRE5820ATM.jpg?version=35',
-      color: '#000000', // Negro (primer color de "Negro con panel digital")
-      marca: 'Atma',
-      categoria: 'Tecnologia',
-      subcategoria: 'Freidora horno de aire (11.6L)',
-    },
-    {
-      name: 'Cocina Multigas Acero',
-      price: 6299,
-      image:
-        'https://www.megatone.net/images/Articulos/zoom/31/MKT0089LLA-1.png?version=35',
-      color: '#808080', // Acero inoxidable (asumiendo gris)
-      marca: 'Llanos',
-      categoria: 'Tecnologia',
-      subcategoria: 'Cocina multigas',
-    },
-    {
-      name: 'Caloventor 2000W',
-      price: 399,
-      image:
-        'https://www.megatone.net/Images/Articulos/zoom/62/CAL2012ATM.jpg?version=35',
-      color: '#FFFFFF', // Blanco (primer color de "Blanco/Negro")
-      marca: 'Atma',
-      categoria: 'Tecnologia',
-      subcategoria: 'Caloventor',
-    },
-    {
-      name: 'Repuesto Cuchilla Oneblade',
-      price: 259,
-      image:
-        'https://www.megatone.net/Images/Articulos/zoom/76/REP2206PHI.jpg?version=35',
-      color: '#008000', // Verde (primer color de "Verde y gris")
-      marca: 'Philips',
-      categoria: 'Tecnologia',
-      subcategoria: 'Cuchilla para afeitadora',
-    },
-    {
-      name: 'Calefactor Infrarrojo CI080',
-      price: 499,
-      image:
-        'https://www.megatone.net/Images/Articulos/zoom/62/CAL1080LIL.jpg?version=35',
-      color: '#FFFFFF', // Blanco (primer color de "Blanco/Naranja")
-      marca: 'Liliana',
-      categoria: 'Tecnologia',
-      subcategoria: 'Calefactor infrarrojo',
-    },
-    {
-      name: 'Exhibidora Inelro 460L',
-      price: 11999,
-      image:
-        'https://www.megatone.net/Images/Articulos/zoom/33/EXH4600INE.jpg?version=35',
-      color: '#FFFFFF', // Blanco (primer color de "Blanco/Transparente")
-      marca: 'Inelro',
-      categoria: 'Tecnologia',
-      subcategoria: 'Heladera exhibidora',
-    },
-    {
-      name: 'Máquina De Coser Singer',
-      price: 3079,
-      image:
-        'https://www.megatone.net/Images/Articulos/zoom/88/MQC1605SIN.jpg?version=35',
-      color: '#FFFFFF', // Blanco (primer color de "Blanco/Rojo")
-      marca: 'Singer',
-      categoria: 'Tecnologia',
-      subcategoria: 'Máquina de coser',
-    },
-    {
-      name: 'Pelota Básquet Striker Nº 7',
-      price: 2549,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/211267-300-300?v=637384697133400000&width=300&height=300&aspect=true',
-      color: '#FFA500', // Naranja (primer color de "Naranja con negro")
-      marca: 'Striker',
-      categoria: 'Deportes',
-      subcategoria: 'Pelota de básquet Nº 7',
-    },
-    {
-      name: 'Buzo Deportivo Hombre',
-      price: 3999,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/1259083-300-300?v=638524206156500000&width=300&height=300&aspect=true',
-      color: '#ADD8E6', // Celeste
-      marca: 'Atlét',
-      categoria: 'Deportes',
-      subcategoria: 'Buzo deportivo',
-      gender: 'MALE',
-      sizes: ['S', 'M', 'L', 'XL'],
-    },
-    {
-      name: 'Zapatillas Vans Authentic',
-      price: 9499,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/345044-300-300?v=637648790109370000&width=300&height=300&aspect=true',
-      color: '#000000', // Negro (primer color de "Negro con suela blanca")
-      marca: 'Vans',
-      categoria: 'Deportes',
-      subcategoria: 'Zapatillas urbanas',
-      gender: 'FEMALE',
-      sizes: ['36', '37', '38', '39', '40', '41', '42', '43', '44'],
-    },
-    {
-      name: 'Campera Adidas Terrex',
-      price: 7259,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/1319402-300-300?v=638551142601100000&width=300&height=300&aspect=true',
-      color: '#90EE90', // Verde claro
-      marca: 'Adidas',
-      categoria: 'Deportes',
-      subcategoria: 'Campera técnica',
-      gender: 'MALE',
-      sizes: ['S', 'M', 'L', 'XL'],
-    },
-    {
-      name: 'Paleta Pádel Bullpadel Neuron',
-      price: 4999,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/1369451-300-300?v=638581377841330000&width=300&height=300&aspect=true',
-      color: '#000000', // Negro (primer color de "Negro con blanco")
-      marca: 'Bullpadel',
-      categoria: 'Deportes',
-      subcategoria: 'Paleta de pádel',
-    },
-    {
-      name: 'Botines Topper Titanium Hombre',
-      price: 3999,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/1438863-300-300?v=638611633478500000&width=300&height=300&aspect=true',
-      color: '#FF0000', // Rojo (primer color de "Rojo con gris")
-      marca: 'Topper',
-      categoria: 'Deportes',
-      subcategoria: 'Botines de fútbol sintético',
-      gender: 'UNISEX',
-      sizes: ['38', '39', '40', '41', '42', '43'],
-    },
-    {
-      name: 'Pelota Básquet Adidas Nº 7',
-      price: 3999,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/1702116-300-300?v=638696070677870000&width=300&height=300&aspect=true',
-      color: '#FFA500', // Naranja (primer color de "Naranja con negro")
-      marca: 'Adidas',
-      categoria: 'Deportes',
-      subcategoria: 'Pelota de básquet Nº 7',
-    },
-    {
-      name: 'Botines Adidas Predator Club',
-      price: 7699,
-      image:
-        'https://sportingio.vtexassets.com/arquivos/ids/1469194-300-300?v=638641821913730000&width=300&height=300&aspect=true',
-      color: '#C0C0C0', // Plateado (primer color de "Plateado con negro", asumiendo gris claro)
-      marca: 'Adidas',
-      categoria: 'Deportes',
-      subcategoria: 'Botines de fútbol',
-      gender: 'MALE',
-      sizes: ['38', '39', '40', '41', '42', '43'],
-    },
-  ];
+  const [nike, adidas, puma] = await Promise.all([
+    prisma.brand.create({ data: { name: 'Nike' } }),
+    prisma.brand.create({ data: { name: 'Adidas' } }),
+    prisma.brand.create({ data: { name: 'Puma' } }),
+  ]);
 
-  for (const prod of productos) {
-    const brand = brands.find((b) => b.name === prod.marca);
-    const categoriaPadre = categoriaMap[prod.categoria];
-    const subcategoria = categoriaPadre.children.find(
-      (c: any) => c.name === prod.subcategoria,
-    );
-
-    const offerPrice = Number(
-      (prod.price * faker.number.float({ min: 0.7, max: 0.95 })).toFixed(2),
-    );
-
-    const product = await prisma.product.create({
-      data: {
-        name: prod.name,
-        description: faker.commerce.productDescription(),
-        priceList: offerPrice,
-        price: prod.price,
-        isService: false,
-        isActive: true,
-        hasDelivery: true,
-        brandId: brand?.id,
-        categoryId: subcategoria.id,
-      },
-    });
-
-    await prisma.productImage.create({
-      data: {
-        productId: product.id,
-        url: prod.image,
-        description: `Imagen de ${prod.name}`,
-        order: 0,
-      },
-    });
-
-    for (const size of prod.sizes ?? ['ÚNICO']) {
-      await prisma.productVariant.create({
+  await Promise.all(
+    [nike, adidas, puma].map((brand) =>
+      prisma.image.create({
         data: {
-          color: prod.color,
-          size,
-          gender: prod.gender,
-          stock: faker.number.int({ min: 5, max: 20 }),
-          productId: product.id,
+          url: `https://placehold.co/300x200?text=${brand.name}`,
+          description: `Logo de la marca ${brand.name}`,
+          order: 0,
+          type: ImageType.BRAND,
+          brandId: brand.id,
         },
-      });
-    }
-  }
+      }),
+    ),
+  );
 
+  const deportes = await prisma.category.create({
+    data: {
+      name: 'Deportes',
+      description: 'Accesorios y ropa deportiva',
+    },
+  });
+
+  await prisma.image.create({
+    data: {
+      url: 'https://placehold.co/400x300?text=Deportes',
+      description: 'Imagen de la categoría Deportes',
+      order: 0,
+      type: ImageType.CATEGORY,
+      categoryId: deportes.id,
+    },
+  });
+
+  const [zapatillas, accesorios, ropa] = await Promise.all([
+    prisma.category.create({
+      data: {
+        name: 'Zapatillas',
+        description: 'Calzado deportivo',
+        parentId: deportes.id,
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: 'Accesorios',
+        description: 'Complementos deportivos',
+        parentId: deportes.id,
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: 'Ropa',
+        description: 'Indumentaria deportiva',
+        parentId: deportes.id,
+      },
+    }),
+  ]);
+
+  await Promise.all(
+    [zapatillas, accesorios, ropa].map((subcat) =>
+      prisma.image.create({
+        data: {
+          url: `https://placehold.co/400x300?text=${subcat.name}`,
+          description: `Imagen de la subcategoría ${subcat.name}`,
+          order: 0,
+          type: ImageType.CATEGORY,
+          categoryId: subcat.id,
+        },
+      }),
+    ),
+  );
   const allCoupons = [];
 
   for (let i = 1; i <= 5; i++) {
@@ -455,62 +199,132 @@ async function main() {
       },
     });
   }
-
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 10; i++) {
     const user = await prisma.user.create({
       data: {
         email: `amayaagustin.2395+${i}@gmail.com`,
         password,
         role: 'CLIENT',
-        points: faker.number.int({ min: 300, max: 500 }),
+        points: 3000,
         person: {
           create: {
             name: `Cliente ${i}`,
-            phone: faker.phone.number(),
-            cuitOrDni: faker.string.numeric(11),
+            phone: `381${Math.floor(1000000 + Math.random() * 8999999)}`,
+            cuitOrDni: `20${Math.floor(10000000 + Math.random() * 89999999)}`,
           },
-        },
-        addresses: {
-          create: [
-            {
-              street: faker.location.streetAddress(),
-              city: 'San Miguel de Tucumán',
-              province: 'Tucumán',
-              postalCode: '4000',
-              isDefault: true,
-            },
-          ],
         },
       },
     });
 
-    const userCoupons = faker.helpers.arrayElements(
-      allCoupons,
-      faker.number.int({ min: 1, max: 3 }),
-    );
-    for (const coupon of userCoupons) {
-      await prisma.userCoupon.create({
-        data: {
-          userId: user.id,
-          couponId: coupon.id,
-        },
-      });
-    }
+    await prisma.address.create({
+      data: {
+        street: `Calle Falsa ${i}`,
+        city: 'San Miguel de Tucumán',
+        province: 'Tucumán',
+        postalCode: '4000',
+        isDefault: true,
+        userId: user.id,
+        lat: -26.8241 + i * 0.001,
+        lng: -65.2226 + i * 0.001,
+      },
+    });
   }
-  await prisma.user.create({
-    data: {
-      email: 'admin@gmail.com',
-      password,
-      role: 'ADMIN',
-      person: {
-        create: {
-          name: 'Admin',
-          phone: faker.phone.number(),
-          cuitOrDni: faker.string.numeric(11),
+
+  for (let i = 1; i <= 2; i++) {
+    const admin = await prisma.user.create({
+      data: {
+        email: `admin+${i}@gmail.com`,
+        password,
+        role: 'ADMIN',
+        person: {
+          create: {
+            name: `Admin ${i}`,
+            phone: `381${Math.floor(1000000 + Math.random() * 8999999)}`,
+            cuitOrDni: `27${Math.floor(10000000 + Math.random() * 89999999)}`,
+          },
         },
       },
-    },
-  });
+    });
+
+    await prisma.address.create({
+      data: {
+        street: `Av. Admin ${i}`,
+        city: 'San Miguel de Tucumán',
+        province: 'Tucumán',
+        postalCode: '4000',
+        isDefault: true,
+        userId: admin.id,
+        lat: -26.8141 + i * 0.001,
+        lng: -65.2126 + i * 0.001,
+      },
+    });
+  }
+
+  const [red, blue, black] = await Promise.all([
+    prisma.color.create({ data: { name: 'Rojo', hex: '#FF0000' } }),
+    prisma.color.create({ data: { name: 'Azul', hex: '#0000FF' } }),
+    prisma.color.create({ data: { name: 'Negro', hex: '#000000' } }),
+  ]);
+
+  const [small, medium, large] = await Promise.all([
+    prisma.size.create({ data: { name: 'S' } }),
+    prisma.size.create({ data: { name: 'M' } }),
+    prisma.size.create({ data: { name: 'L' } }),
+  ]);
+  const [male, female, unisex] = await Promise.all([
+    prisma.gender.create({ data: { name: 'Hombre' } }),
+    prisma.gender.create({ data: { name: 'Mujer' } }),
+    prisma.gender.create({ data: { name: 'Unisex' } }),
+  ]);
+
+  const subcategories = [zapatillas, accesorios, ropa];
+
+  for (let i = 0; i < 32; i++) {
+    const name = PRODUCT_NAMES[i % PRODUCT_NAMES.length];
+    const brand = [nike, adidas, puma][i % 3];
+    const subcategory = subcategories[i % subcategories.length];
+
+    const product = await prisma.product.create({
+      data: {
+        name: `${name} ${i + 1}`,
+        description: `Descripción del producto ${name}`,
+        price: 300 + i * 10,
+        priceList: 200 + i * 10,
+        categoryId: subcategory.id,
+        brandId: brand.id,
+      },
+    });
+
+    await prisma.image.create({
+      data: {
+        url: `https://placehold.co/600x600?text=${encodeURIComponent(name)}`,
+        description: `Imagen del producto ${name}`,
+        order: 0,
+        type: ImageType.PRODUCT,
+        productId: product.id,
+      },
+    });
+
+    const variant = await prisma.productVariant.create({
+      data: {
+        productId: product.id,
+        colorId: [red, blue, black][i % 3].id,
+        sizeId: [small, medium, large][i % 3].id,
+        genderId: [male, female, unisex][i % 3].id,
+        stock: 10 + i,
+      },
+    });
+
+    await prisma.image.create({
+      data: {
+        url: `https://placehold.co/200x200?text=Variante+${i + 1}`,
+        description: `Imagen de la variante ${i + 1}`,
+        order: 0,
+        type: ImageType.VARIANT,
+        variantId: variant.id,
+      },
+    });
+  }
 }
 
 main()
