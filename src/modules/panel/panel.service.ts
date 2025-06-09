@@ -3,6 +3,7 @@ import { OrderStatus } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { paginatePrisma } from 'src/common/pagination';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
+import { ExcelService } from 'src/services/excel/excel.service';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { formatDate } from 'src/utils/parsers';
 
@@ -11,6 +12,7 @@ export class PanelService {
   constructor(
     private prisma: PrismaService,
     private readonly i18n: I18nService,
+    private readonly excelService: ExcelService,
   ) {}
 
   async dashboard() {
@@ -264,5 +266,10 @@ export class PanelService {
         },
       },
     });
+  }
+
+  async createProductsWithExcel(buffer: Buffer) {
+    const products = await this.excelService.readExcel(buffer);
+    console.log(products);
   }
 }

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { PrismaClient } from '@prisma/client';
+import { EcommerceType, IndustryType, PrismaClient } from '@prisma/client';
 import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -18,6 +18,25 @@ type Producto = {
 
 async function main() {
   const password = await hash('Pass1234', 10);
+
+  await prisma.ecommerceConfig.create({
+    data: {
+      type: EcommerceType.PRODUCTOS,
+      industry: IndustryType.OTRO,
+      address: {
+        create: {
+          street: 'Av. Ejemplo 123',
+          city: 'San Miguel de Tucumán',
+          province: 'Tucumán',
+          postalCode: '4000',
+          isDefault: true,
+          lat: -26.8241,
+          lng: -65.2226,
+        },
+      },
+    },
+  });
+
   const marcas = [
     'Platinum',
     'DormiLindo',

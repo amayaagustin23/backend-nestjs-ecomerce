@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -13,6 +14,7 @@ import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { Role } from 'src/constants';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateOrderDto } from './dto/order.dto';
 import { OrdersService } from './orders.service';
 
 @ApiTags('orders')
@@ -26,8 +28,12 @@ export class OrdersController {
   @ApiOperation({ summary: 'Create one order by cart' })
   @ApiResponse({ status: 201, description: 'Order created successfully' })
   @HttpCode(HttpStatus.CREATED)
-  create(@Param('id') id: string, @GetCurrentUser('userId') userId: string) {
-    return this.ordersService.createOrderFromCart(id, userId);
+  create(
+    @Param('id') id: string,
+    @GetCurrentUser('userId') userId: string,
+    @Body() body: CreateOrderDto,
+  ) {
+    return this.ordersService.createOrderFromCart(body, id, userId);
   }
 
   @HasRoles(Role.CLIENT)
@@ -48,5 +54,12 @@ export class OrdersController {
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);
+  }
+
+  @HasRoles(Role.CLIENT)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Get('calculate/:codePostal')
+  calculateShipping(@Param('codePostal') codePostal: string) {
+    return this.ordersService.calculateShipping(codePostal);
   }
 }

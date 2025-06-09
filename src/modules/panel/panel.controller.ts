@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { PaginationArgs } from 'src/common/pagination/pagination.interface';
@@ -31,5 +41,14 @@ export class PanelController {
   @Get('users-order/:id')
   findUserById(@Param('id') id: string) {
     return this.panelService.findOrderByUserId(id);
+  }
+
+  @HasRoles(Role.ADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Post('upload/products')
+  @UseInterceptors(FileInterceptor('file'))
+  async createProductsWithExcel(@UploadedFile() file: Express.Multer.File) {
+    const data = await this.panelService.createProductsWithExcel(file.buffer);
+    return data;
   }
 }

@@ -216,11 +216,16 @@ export class CartsService {
     }
 
     const { itemsToAdd, itemsToUpdate, itemsToDelete, couponCode } = dto;
+
     const notAdded: string[] = [];
 
-    // Validar y aplicar cupón si llega
     let newCoupon = existingCart.coupon;
-    if (couponCode) {
+    if (couponCode === 'null') {
+      await this.cart.update({
+        where: { id },
+        data: { coupon: { disconnect: true } },
+      });
+    } else if (couponCode && couponCode !== 'null') {
       const coupon = await this.prisma.coupon.findUnique({
         where: { code: couponCode },
       });

@@ -9,11 +9,15 @@ import {
   PaymentMethod,
   PaymentStatus,
   Prisma,
+  ShippingStatus,
+  ShippingType,
 } from '@prisma/client';
+import * as moment from 'moment';
 import { I18nService } from 'nestjs-i18n';
 import { MercadopagoService } from 'src/services/mercadopago/mercadopago.service';
 import { MessagingService } from 'src/services/messaging/messaging.service';
 import { PrismaService } from 'src/services/prisma/prisma.service';
+import { CreateOrderDto } from './dto/order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -32,7 +36,12 @@ export class OrdersService {
     this.payment = prisma.payment;
   }
 
-  async createOrderFromCart(cartId: string, userId: string) {
+  async createOrderFromCart(
+    body: CreateOrderDto,
+    cartId: string,
+    userId: string,
+  ) {
+    const { address, shippingCost, estimatedDeliveryDate } = body;
     const cart = await this.cart.findUnique({
       where: {
         id: cartId,
@@ -103,9 +112,8 @@ export class OrdersService {
       0,
     );
 
-    const shippingCost = 1500;
     const total = subtotal + shippingCost;
-
+    const { trackingNumber, trackingUrl } = this.generateTrackingData(cartId);
     const order = await this.order.create({
       data: {
         ...(cart.couponId
@@ -116,6 +124,16 @@ export class OrdersService {
         subtotal,
         shippingCost,
         total,
+        shippingInfo: {
+          create: {
+            estimatedDeliveryDate,
+            trackingUrl,
+            trackingNumber,
+            address: { connect: { id: address } },
+            type: ShippingType.CORREO,
+            status: ShippingStatus.PREPARANDO,
+          },
+        },
       },
       include: {
         user: { include: { person: true } },
@@ -203,5 +221,63 @@ export class OrdersService {
         },
       },
     });
+  }
+
+  async calculateShipping(destinationZip: string) {
+    let shippingCost = 0;
+    let deliveryDays = 0;
+
+    const ecommerceConfigwithAddress =
+      await this.prisma.ecommerceConfig.findFirst({
+        include: { address: true },
+      });
+
+    console.log(ecommerceConfigwithAddress.address);
+
+    if (
+      ecommerceConfigwithAddress &&
+      ecommerceConfigwithAddress.address &&
+      ecommerceConfigwithAddress.address.postalCode.slice(0, 1) ===
+        destinationZip.slice(0, 1)
+    ) {
+      shippingCost = 1000;
+      deliveryDays = 2;
+    } else if (
+      ecommerceConfigwithAddress &&
+      ecommerceConfigwithAddress.address &&
+      Math.abs(
+        Number(ecommerceConfigwithAddress.address.postalCode) -
+          Number(destinationZip),
+      ) < 1000
+    ) {
+      shippingCost = 1500;
+      deliveryDays = 4;
+    } else {
+      shippingCost = 2000;
+      deliveryDays = 7;
+    }
+
+    const estimatedDeliveryDate = moment().add(deliveryDays, 'days').toDate();
+    console.log(estimatedDeliveryDate);
+    console.log(shippingCost);
+
+    return { shippingCost, estimatedDeliveryDate };
+  }
+
+  generateTrackingData(cartId: string) {
+    const now = new Date();
+
+    const datePart = `${now.getFullYear()}${(now.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+
+    const cartPart = cartId.slice(0, 6).toUpperCase();
+
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+
+    const trackingNumber = `TRK-${datePart}-${cartPart}-${randomPart}`;
+    const trackingUrl = `https://seguimiento.fake/envio/${trackingNumber}`;
+
+    return { trackingNumber, trackingUrl };
   }
 }
