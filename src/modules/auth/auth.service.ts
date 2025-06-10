@@ -103,24 +103,22 @@ export class AuthService {
       role: findUser.role,
     });
 
-    // Seteá la cookie segura
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 1000 * 60 * 60 * 24, // 1 día
+      maxAge: 1000 * 60 * 60 * 24,
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
     return {
       user: await this.userService.mapToBasicUserInfoFromUser(findUser),
-      // opcional: podrías omitir tokens si ya van en cookies
     };
   }
 

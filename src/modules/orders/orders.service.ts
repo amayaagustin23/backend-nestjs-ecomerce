@@ -241,7 +241,6 @@ export class OrdersService {
         include: { address: true },
       });
 
-    console.log(ecommerceConfigwithAddress.address);
 
     if (
       ecommerceConfigwithAddress &&

@@ -56,7 +56,6 @@ export class ProductsService {
       {};
     const productImages: Prisma.ImageCreateInput[] = [];
 
-    // Parsear variantes
     if (variantsRaw) {
       try {
         variants = JSON.parse(variantsRaw as unknown as string);
@@ -65,9 +64,8 @@ export class ProductsService {
       }
     }
 
-    // Agrupar imágenes por tempId de variante o como generales del producto
     for (const file of files) {
-      const fieldname = file.fieldname; // ej: 'variantImages-temp-0'
+      const fieldname = file.fieldname;
       const url = await this.uploadService.upload(file);
       const image: Prisma.ImageCreateInput = {
         url,
@@ -88,7 +86,6 @@ export class ProductsService {
       }
     }
 
-    // Crear producto y variantes
     const product = await this.prisma.product.create({
       data: {
         ...rest,
@@ -336,7 +333,6 @@ export class ProductsService {
       );
     }
 
-    // ✅ Agrupar imágenes por variante
     const imagesGroupedByVariant: Record<string, Prisma.ImageCreateInput[]> =
       {};
 
@@ -387,7 +383,6 @@ export class ProductsService {
       },
     });
 
-    // ✅ Actualizar variantes existentes
     for (const variant of parsedVariantsToUpdate) {
       const { id: variantId, stock, size, color, gender } = variant;
 
@@ -412,7 +407,6 @@ export class ProductsService {
           }),
         },
       });
-      console.log(imagesGroupedByVariant);
 
       if (imagesGroupedByVariant[variantId]?.length) {
         await this.prisma.image.createMany({
@@ -424,9 +418,7 @@ export class ProductsService {
       }
     }
 
-    // ✅ Crear nuevas variantes
     for (const variant of parsedVariants) {
-      console.log(parsedVariants);
       const { stock, size, color, gender, tempId } = variant as any;
 
       const createdVariant = await this.prisma.productVariant.create({
@@ -461,7 +453,6 @@ export class ProductsService {
       }
     }
 
-    // ✅ Eliminar variantes
     if (parsedVariantsToDelete.length) {
       await this.prisma.productVariant.updateMany({
         where: {
@@ -474,7 +465,6 @@ export class ProductsService {
       });
     }
 
-    // ✅ Eliminar imágenes
     if (parsedImagesToDelete.length) {
       await this.prisma.image.deleteMany({
         where: {

@@ -266,14 +266,12 @@ export class CartsService {
 
     const couponValue = newCoupon?.value || 0;
 
-    // Eliminar items
     if (itemsToDelete?.length) {
       await this.cartItem.deleteMany({
         where: { id: { in: itemsToDelete } },
       });
     }
 
-    // Actualizar items existentes
     if (itemsToUpdate?.length) {
       const existingItems = await this.cartItem.findMany({
         where: { id: { in: itemsToUpdate.map((i) => i.id) } },
@@ -297,7 +295,6 @@ export class CartsService {
       );
     }
 
-    // Agregar nuevos items
     if (itemsToAdd?.length) {
       const variants = await this.prisma.productVariant.findMany({
         where: {
@@ -334,7 +331,6 @@ export class CartsService {
       }
     }
 
-    // 💡 Si solo llegó couponCode, recalcular los items actuales
     if (
       couponCode &&
       !itemsToAdd?.length &&

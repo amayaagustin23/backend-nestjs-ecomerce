@@ -27,7 +27,6 @@ export class PanelService {
         this.prisma.product.count(),
       ]);
 
-    // --- Ganancias e ingresos ---
     let totalProfit = 0;
     let totalRevenue = 0;
     const profitsByProduct: Record<string, number> = {};
@@ -47,7 +46,6 @@ export class PanelService {
     const averageOrderValue =
       ordersCountPaid > 0 ? totalRevenue / ordersCountPaid : 0;
 
-    // --- Recompradores ---
     const repeatBuyers = await this.prisma.order.groupBy({
       by: ['userId'],
       where: { status: OrderStatus.PAID },
@@ -58,7 +56,6 @@ export class PanelService {
       usersCount > 0 ? repeatBuyers.length / usersCount : 0;
     const customerLifetimeValue = averageOrderValue * repeatPurchaseRate;
 
-    // --- Productos más vendidos ---
     const productsMostSold = await this.prisma.orderItem.groupBy({
       by: ['productId'],
       _sum: { quantity: true },
@@ -82,7 +79,6 @@ export class PanelService {
       };
     });
 
-    // --- Productos más rentables ---
     const topProfitableProducts = Object.entries(profitsByProduct)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
@@ -95,7 +91,6 @@ export class PanelService {
         };
       });
 
-    // --- Cupones más usados ---
     const couponsMostUsed = await this.prisma.userCoupon.groupBy({
       by: ['parentCouponId'],
       _count: { parentCouponId: true },
@@ -120,7 +115,6 @@ export class PanelService {
       };
     });
 
-    // --- Órdenes por día ---
     const orderListForDaysRaw = await this.prisma.order.findMany({
       where: { status: OrderStatus.PAID },
       select: { createdAt: true },
@@ -140,7 +134,6 @@ export class PanelService {
       }),
     );
 
-    // --- Estado de carritos y pagos ---
     const [cartsByStatus, paymentsByStatus] = await Promise.all([
       this.prisma.cart.groupBy({ by: ['status'], _count: { status: true } }),
       this.prisma.payment.groupBy({ by: ['status'], _count: { status: true } }),
@@ -277,6 +270,5 @@ export class PanelService {
 
   async createProductsWithExcel(buffer: Buffer) {
     const products = await this.excelService.readExcel(buffer);
-    console.log(products);
   }
 }

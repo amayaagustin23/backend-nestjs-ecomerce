@@ -118,7 +118,6 @@ async function main() {
     });
   }
 
-  // Ensure brands exist
   const [adidas, atleticoTucuman, topper, nike, puma, saucony] =
     await Promise.all([
       prisma.brand.upsert({
@@ -161,7 +160,6 @@ async function main() {
     Saucony: saucony.id,
   };
 
-  // Ensure categories exist
   const [camisetas, ropa, moda, training, running, futbol, padel, basquet] =
     await Promise.all([
       prisma.category.upsert({
@@ -222,7 +220,6 @@ async function main() {
     Basquet: basquet.id,
   };
 
-  // Ensure colors exist
   const [blanco, negro, verde, grey, amarillo, rojo, naranja] =
     await Promise.all([
       prisma.color.upsert({
@@ -272,7 +269,6 @@ async function main() {
     naranja: naranja.id,
   };
 
-  // Ensure sizes exist
   const [
     small,
     medium,
@@ -349,7 +345,6 @@ async function main() {
     Unico: unico.id,
   };
 
-  // Ensure gender "Hombre" exists
   const male = await prisma.gender.upsert({
     where: { name: 'Hombre' },
     update: {},
@@ -559,9 +554,6 @@ async function main() {
         maleGenderId,
       );
     } else {
-      console.error(
-        `Brand, category or color not found for product: ${productData.name}`,
-      );
     }
   }
 

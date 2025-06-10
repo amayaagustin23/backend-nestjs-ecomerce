@@ -1,5 +1,3 @@
-// src/services/google-places/google-places.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -19,7 +17,7 @@ export class GooglePlacesService {
       params: {
         input,
         types: 'address',
-        components: 'country:ar', // solo Argentina
+        components: 'country:ar',
         key: this.apiKey,
       },
     });
@@ -83,6 +81,6 @@ export class GooglePlacesService {
       },
     );
 
-    return response.data.options; // array con opciones de envío
+    return response.data.options;
   }
 }

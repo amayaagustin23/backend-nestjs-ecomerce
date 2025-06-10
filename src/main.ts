@@ -28,7 +28,6 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-      // ⬇️ ¡Este `validationError` es CLAVE para mostrar los mensajes como esperás!
       validationError: {
         target: false,
         value: false,

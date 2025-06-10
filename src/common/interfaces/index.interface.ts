@@ -81,7 +81,6 @@ export interface AddressParse {
   lng: number;
 }
 
-// interfaces/cart.types.ts
 export interface CouponCart {
   value: number;
   code: string;
