@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsBoolean,
   IsNotEmpty,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -101,35 +101,28 @@ export class CreateProductDto {
 }
 
 export class UpdateProductVariantDto {
-  @ApiProperty({ example: 'uuid', description: 'ID del variant (si existe)' })
-  @IsUUID()
   @IsOptional()
+  @IsUUID()
   id?: string;
 
-  @ApiProperty({ example: 'M' })
-  @IsString()
-  size: string;
+  @IsObject()
+  @ValidateNested()
+  size: { id: string };
 
-  @ApiProperty({ example: 'Negro' })
-  @IsString()
-  color: string;
+  @IsObject()
+  @ValidateNested()
+  color: { id: string };
 
-  @ApiProperty({ example: 'Unisex' })
-  @IsString()
-  gender: string;
+  @IsObject()
+  @ValidateNested()
+  gender: { id: string };
 
-  @ApiProperty({ example: 10 })
   @IsNumber()
   stock: number;
 
-  @ApiProperty({
-    example: true,
-    required: false,
-    description: 'Si se debe eliminar esta variante',
-  })
   @IsOptional()
-  @IsBoolean()
-  delete?: boolean;
+  @IsString()
+  tempId?: string;
 }
 
 export class UpdateProductDto {

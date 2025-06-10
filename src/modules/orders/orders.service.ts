@@ -202,7 +202,6 @@ export class OrdersService {
           include: {
             product: {
               include: {
-                images: true,
                 category: true,
                 brand: true,
               },
@@ -222,7 +221,6 @@ export class OrdersService {
           include: {
             product: {
               include: {
-                images: true,
                 category: true,
                 brand: true,
               },

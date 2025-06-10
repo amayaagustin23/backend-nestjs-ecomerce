@@ -191,12 +191,11 @@ export class CartsService {
           include: {
             product: {
               include: {
-                images: true,
                 category: true,
                 brand: true,
               },
             },
-            variant: true,
+            variant: { include: { images: true } },
           },
         },
       },

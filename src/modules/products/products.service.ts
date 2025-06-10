@@ -48,10 +48,15 @@ export class ProductsService {
     return this.product.findUnique<T>(input);
   }
 
-  async create(body: CreateProductDto, files?: Express.Multer.File[]) {
+  async create(body: CreateProductDto, files: Express.Multer.File[] = []) {
     const { variants: variantsRaw, categoryId, brandId, ...rest } = body;
-    let variants = [];
 
+    let variants: any[] = [];
+    const imagesGroupedByVariant: Record<string, Prisma.ImageCreateInput[]> =
+      {};
+    const productImages: Prisma.ImageCreateInput[] = [];
+
+    // Parsear variantes
     if (variantsRaw) {
       try {
         variants = JSON.parse(variantsRaw as unknown as string);
@@ -60,86 +65,77 @@ export class ProductsService {
       }
     }
 
-    const imageInputs = files?.length
-      ? await Promise.all(
-          files.map(async (file, index) => ({
-            url: await this.uploadService.upload(file),
-            order: index,
-          })),
-        )
-      : [];
+    // Agrupar imágenes por tempId de variante o como generales del producto
+    for (const file of files) {
+      const fieldname = file.fieldname; // ej: 'variantImages-temp-0'
+      const url = await this.uploadService.upload(file);
+      const image: Prisma.ImageCreateInput = {
+        url,
+        order: 0,
+        description: '',
+        type: ImageType.VARIANT,
+      };
 
-    const product = await this.product
-      .create({
-        data: {
-          ...rest,
-          isService: toBoolean(rest.isService),
-          isActive: toBoolean(rest.isActive),
-          hasDelivery: toBoolean(rest.hasDelivery),
-          category: {
-            connect: { id: categoryId },
-          },
-          brand: {
-            connect: { id: brandId },
-          },
-          variants: variants?.length
-            ? {
-                create: variants.map((variant) => ({
-                  size: variant.size
-                    ? { connect: { id: variant.size } }
-                    : undefined,
-                  color: variant.color
-                    ? { connect: { id: variant.color } }
-                    : undefined,
-                  stock: variant.stock,
-                  gender: variant.gender,
-                  images: variant.image
-                    ? {
-                        create: [
-                          {
-                            url: variant.image,
-                            order: 0,
-                            type: 'PRODUCT',
-                          },
-                        ],
-                      }
-                    : imageInputs.length
-                      ? {
-                          create: imageInputs.map((img) => ({
-                            ...img,
-                            type: 'PRODUCT',
-                          })),
-                        }
-                      : undefined,
-                })),
-              }
-            : undefined,
-          images: imageInputs.length
-            ? {
-                create: imageInputs.map((img) => ({
-                  ...img,
-                  type: 'PRODUCT',
-                })),
-              }
-            : undefined,
-        },
-        include: {
-          variants: {
-            include: { images: true },
-          },
-          images: true,
-          category: { include: { children: true } },
-          brand: true,
-        },
-      })
-      .catch((e) => {
-        if (e.code === 'P2002') {
-          throw new ConflictException(
-            this.i18n.t('errors.conflict', { args: { model: 'Product' } }),
-          );
+      const match = fieldname.match(/^variantImages-(temp-\d+)$/);
+      if (match) {
+        const tempId = match[1];
+        if (!imagesGroupedByVariant[tempId]) {
+          imagesGroupedByVariant[tempId] = [];
         }
-        throw e;
-      });
+        imagesGroupedByVariant[tempId].push(image);
+      } else {
+        productImages.push({ ...image, type: ImageType.PRODUCT });
+      }
+    }
+
+    // Crear producto y variantes
+    const product = await this.prisma.product.create({
+      data: {
+        ...rest,
+        isService: toBoolean(rest.isService),
+        isActive: toBoolean(rest.isActive),
+        hasDelivery: toBoolean(rest.hasDelivery),
+        category: { connect: { id: categoryId } },
+        brand: { connect: { id: brandId } },
+        variants: {
+          create: variants.map((variant) => {
+            const { stock, size, color, gender, tempId } = variant;
+
+            return {
+              stock,
+              ...(size && {
+                size: {
+                  connect: { id: typeof size === 'string' ? size : size.id },
+                },
+              }),
+              ...(color && {
+                color: {
+                  connect: { id: typeof color === 'string' ? color : color.id },
+                },
+              }),
+              ...(gender && {
+                gender: {
+                  connect: {
+                    id: typeof gender === 'string' ? gender : gender.id,
+                  },
+                },
+              }),
+              images:
+                imagesGroupedByVariant[tempId]?.length > 0
+                  ? {
+                      create: imagesGroupedByVariant[tempId],
+                    }
+                  : undefined,
+            };
+          }),
+        },
+      },
+      include: {
+        variants: { include: { images: true } },
+        category: { include: { children: true } },
+        brand: true,
+      },
+    });
 
     return this.mapToParsedProduct(product);
   }
@@ -265,9 +261,9 @@ export class ProductsService {
         include: {
           ...(userId && { favoritedBy: true }),
           variants: {
+            where: { isDeleted: false },
             include: { color: true, size: true, gender: true, images: true },
           },
-          images: true,
           category: { include: { children: true } },
           brand: true,
         },
@@ -288,9 +284,9 @@ export class ProductsService {
       include: {
         favoritedBy: true,
         variants: {
+          where: { isDeleted: false },
           include: { color: true, size: true, gender: true, images: true },
         },
-        images: true,
         category: { include: { children: true } },
         brand: true,
       },
@@ -312,26 +308,26 @@ export class ProductsService {
   ) {
     const {
       variants,
+      variantsToUpdate,
       variantsToDelete,
       imagesToDelete,
-      variantsToUpdate,
       categoryId,
       brandId,
       ...rest
     } = body;
 
     let parsedVariants: UpdateProductVariantDto[] = [];
+    let parsedVariantsToUpdate: UpdateProductVariantDto[] = [];
     let parsedVariantsToDelete: string[] = [];
     let parsedImagesToDelete: string[] = [];
-    let parsedVariantsToUpdate: UpdateProductVariantDto[] = [];
 
     try {
       parsedVariants = variants ? JSON.parse(variants) : [];
-      parsedVariantsToDelete = variantsToDelete
-        ? JSON.parse(variantsToDelete)
-        : [];
       parsedVariantsToUpdate = variantsToUpdate
         ? JSON.parse(variantsToUpdate)
+        : [];
+      parsedVariantsToDelete = variantsToDelete
+        ? JSON.parse(variantsToDelete)
         : [];
       parsedImagesToDelete = imagesToDelete ? JSON.parse(imagesToDelete) : [];
     } catch (error) {
@@ -340,23 +336,31 @@ export class ProductsService {
       );
     }
 
-    const newImages =
-      files && files.length
-        ? await Promise.all(
-            files.map(async (file, index) => ({
-              url: await this.uploadService.upload(file),
-              order: index,
-              description: '',
-              type: ImageType.VARIANT,
-            })),
-          )
-        : [];
+    // ✅ Agrupar imágenes por variante
+    const imagesGroupedByVariant: Record<string, Prisma.ImageCreateInput[]> =
+      {};
+
+    for (const file of files || []) {
+      const variantId = file.originalname.split('__')[0];
+      const url = await this.uploadService.upload(file);
+      const image = {
+        url,
+        order: 0,
+        description: '',
+        type: ImageType.VARIANT,
+      };
+
+      if (!imagesGroupedByVariant[variantId]) {
+        imagesGroupedByVariant[variantId] = [];
+      }
+
+      imagesGroupedByVariant[variantId].push(image);
+    }
 
     const product = await this.product.findUnique({
       where: { id },
       include: {
         variants: true,
-        images: true,
       },
     });
 
@@ -366,126 +370,115 @@ export class ProductsService {
       );
     }
 
-    const updatedProduct = await this.product
-      .update({
-        where: { id },
+    const updatedProduct = await this.product.update({
+      where: { id },
+      data: {
+        ...rest,
+        isService: toBoolean(rest.isService),
+        isActive: toBoolean(rest.isActive),
+        hasDelivery: toBoolean(rest.hasDelivery),
+        ...(categoryId && { categoryId }),
+        ...(brandId && { brandId }),
+      },
+      include: {
+        variants: true,
+        brand: true,
+        category: { include: { parent: true } },
+      },
+    });
+
+    // ✅ Actualizar variantes existentes
+    for (const variant of parsedVariantsToUpdate) {
+      const { id: variantId, stock, size, color, gender } = variant;
+
+      await this.prisma.productVariant.update({
+        where: { id: variantId },
         data: {
-          ...rest,
-          isService: toBoolean(rest.isService),
-          isActive: toBoolean(rest.isActive),
-          hasDelivery: toBoolean(rest.hasDelivery),
-          ...(categoryId && { categoryId }),
-          ...(brandId && { brandId }),
-          images: newImages.length
-            ? {
-                create: newImages,
-              }
-            : undefined,
+          stock,
+          ...(size && {
+            size: {
+              connect: { id: typeof size === 'string' ? size : size.id },
+            },
+          }),
+          ...(color && {
+            color: {
+              connect: { id: typeof color === 'string' ? color : color.id },
+            },
+          }),
+          ...(gender && {
+            gender: {
+              connect: { id: typeof gender === 'string' ? gender : gender.id },
+            },
+          }),
         },
-        include: {
-          variants: true,
-          images: true,
-          brand: true,
-          category: { include: { parent: true } },
-        },
-      })
-      .catch((e) => {
-        if (e.code === 'P2002') {
-          throw new ConflictException(
-            this.i18n.t('errors.conflict', { args: { model: 'Produ' } }),
-          );
-        }
-        throw e;
       });
-    if (parsedVariantsToUpdate.length) {
-      for (const variant of parsedVariantsToUpdate) {
-        const { id, size, color, gender, ...rest } = variant;
-        await this.prisma.productVariant.update({
-          where: { id },
-          data: {
-            ...rest,
-            ...(size && {
-              size: { connect: { id: size } },
-            }),
-            ...(color && {
-              color: { connect: { id: color } },
-            }),
-            ...(gender && {
-              gender: { connect: { id: gender } },
-            }),
-          },
+      console.log(imagesGroupedByVariant);
+
+      if (imagesGroupedByVariant[variantId]?.length) {
+        await this.prisma.image.createMany({
+          data: imagesGroupedByVariant[variantId].map((img) => ({
+            ...img,
+            variantId,
+          })),
         });
       }
     }
+
+    // ✅ Crear nuevas variantes
+    for (const variant of parsedVariants) {
+      console.log(parsedVariants);
+      const { stock, size, color, gender, tempId } = variant as any;
+
+      const createdVariant = await this.prisma.productVariant.create({
+        data: {
+          stock,
+          ...(size && {
+            size: {
+              connect: { id: typeof size === 'string' ? size : size.id },
+            },
+          }),
+          ...(color && {
+            color: {
+              connect: { id: typeof color === 'string' ? color : color.id },
+            },
+          }),
+          ...(gender && {
+            gender: {
+              connect: { id: typeof gender === 'string' ? gender : gender.id },
+            },
+          }),
+          product: { connect: { id } },
+        },
+      });
+
+      if (imagesGroupedByVariant[tempId]?.length) {
+        await this.prisma.image.createMany({
+          data: imagesGroupedByVariant[tempId].map((img) => ({
+            ...img,
+            variantId: createdVariant.id,
+          })),
+        });
+      }
+    }
+
+    // ✅ Eliminar variantes
     if (parsedVariantsToDelete.length) {
-      await this.prisma.productVariant.deleteMany({
+      await this.prisma.productVariant.updateMany({
         where: {
-          id: {
-            in: parsedVariantsToDelete,
-          },
+          id: { in: parsedVariantsToDelete },
           productId: id,
+        },
+        data: {
+          isDeleted: true,
         },
       });
     }
 
-    for (const variant of parsedVariants) {
-      if (variant.id) {
-        await this.prisma.productVariant
-          .update({
-            where: { id: variant.id },
-            data: {
-              size: variant.size
-                ? { connect: { id: variant.size } }
-                : undefined,
-              color: variant.color
-                ? { connect: { id: variant.color } }
-                : undefined,
-              stock: variant.stock,
-            },
-          })
-          .catch((e) => {
-            if (e.code === 'P2002') {
-              throw new ConflictException(
-                this.i18n.t('errors.conflict', { args: { model: 'Variant' } }),
-              );
-            }
-            throw e;
-          });
-      } else {
-        await this.prisma.productVariant
-          .create({
-            data: {
-              size: variant.size
-                ? { connect: { id: variant.size } }
-                : undefined,
-              color: variant.color
-                ? { connect: { id: variant.color } }
-                : undefined,
-              stock: variant.stock,
-              gender: variant.gender
-                ? { connect: { id: variant.gender } }
-                : undefined,
-              product: { connect: { id } },
-            },
-          })
-          .catch((e) => {
-            if (e.code === 'P2002') {
-              throw new ConflictException(
-                this.i18n.t('errors.conflict', { args: { model: 'Variante' } }),
-              );
-            }
-            throw e;
-          });
-      }
-    }
-
+    // ✅ Eliminar imágenes
     if (parsedImagesToDelete.length) {
       await this.prisma.image.deleteMany({
         where: {
-          id: {
-            in: parsedImagesToDelete,
-          },
-          productId: id,
+          id: { in: parsedImagesToDelete },
         },
       });
     }
@@ -522,7 +515,6 @@ export class ProductsService {
       include: {
         favoritedBy: true,
         variants: true,
-        images: true,
         category: {
           include: {
             children: true,
@@ -540,7 +532,6 @@ export class ProductsService {
       where: { id },
       include: {
         variants: true,
-        images: true,
       },
     });
     if (!product) {
@@ -553,11 +544,7 @@ export class ProductsService {
         this.i18n.t('errors.conflict', { args: { model: 'Product' } }),
       );
     }
-    if (product.images.length) {
-      await this.prisma.image.deleteMany({
-        where: { productId: id },
-      });
-    }
+
     await this.prisma.image.deleteMany({
       where: { productId: id },
     });

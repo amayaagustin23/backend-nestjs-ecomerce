@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
-  FileFieldsInterceptor,
+  AnyFilesInterceptor,
   FilesInterceptor,
 } from '@nestjs/platform-express';
 import {
@@ -55,12 +55,12 @@ export class ProductsController {
   })
   @ApiResponse({ status: 201, description: 'Product created successfully' })
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 10 }]))
+  @UseInterceptors(AnyFilesInterceptor())
   async create(
     @Body() createProductDto: CreateProductDto,
-    @UploadedFiles() files: { files?: Express.Multer.File[] },
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.productsService.create(createProductDto, files?.files ?? []);
+    return this.productsService.create(createProductDto, files ?? []);
   }
 
   @Get()
