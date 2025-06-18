@@ -12,7 +12,7 @@ import {
   ShippingStatus,
   ShippingType,
 } from '@prisma/client';
-import * as moment from 'moment';
+import moment from 'moment';
 import { I18nService } from 'nestjs-i18n';
 import { MercadopagoService } from 'src/services/mercadopago/mercadopago.service';
 import { MessagingService } from 'src/services/messaging/messaging.service';
@@ -240,7 +240,6 @@ export class OrdersService {
       await this.prisma.ecommerceConfig.findFirst({
         include: { address: true },
       });
-
 
     if (
       ecommerceConfigwithAddress &&

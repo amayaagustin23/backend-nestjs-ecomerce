@@ -10,17 +10,11 @@ export type I18nTranslations = {
             "subject": string;
             "body": string;
         };
-        "newPassword": {
+        "registerEmail": {
             "subject": string;
             "body": string;
         };
         "resetPassword": {
-            "subject": string;
-            "body": string;
-        };
-        "changePassword": string;
-        "sendEmailURL": string;
-        "registerEmail": {
             "subject": string;
             "body": string;
         };
@@ -40,6 +34,8 @@ export type I18nTranslations = {
             "subject": string;
             "body": string;
         };
+        "changePassword": string;
+        "sendEmailURL": string;
     };
     "errors": {
         "validations": {

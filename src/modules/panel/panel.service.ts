@@ -267,8 +267,4 @@ export class PanelService {
       },
     });
   }
-
-  async createProductsWithExcel(buffer: Buffer) {
-    const products = await this.excelService.readExcel(buffer);
-  }
 }

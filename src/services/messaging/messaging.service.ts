@@ -11,7 +11,7 @@ import { EMAIL_PROVIDER, EmailService } from './messaging.types';
 @Injectable()
 export class MessagingService {
   constructor(
-    @Inject(EMAIL_PROVIDER) private emailService: EmailService,
+    @Inject(EMAIL_PROVIDER) private readonly emailService: EmailService,
     private readonly i18n: I18nService,
   ) {}
 
@@ -23,9 +23,10 @@ export class MessagingService {
     const { from, to, user } = input;
 
     const subject = await this.i18n.t('emails.registerEmail.subject');
-    const body = await this.i18n
-      .t('emails.registerEmail.body')
-      .replace('{{name}}', user.name);
+    const body = (await this.i18n.t('emails.registerEmail.body')).replace(
+      '{{name}}',
+      user.name,
+    );
 
     await this.emailService.send({
       from,
@@ -37,8 +38,8 @@ export class MessagingService {
 
   async sendResetPasswordEmail(input: { from: string; to: string }) {
     const { from, to } = input;
-    const subject = this.i18n.t('emails.resetPassword.subject');
-    const body = this.i18n.t('emails.resetPassword.body');
+    const subject = await this.i18n.t('emails.resetPassword.subject');
+    const body = await this.i18n.t('emails.resetPassword.body');
 
     await this.emailService.send({
       from,
@@ -55,10 +56,11 @@ export class MessagingService {
   }) {
     const { from, to, redirectUrl } = input;
 
-    const subject = this.i18n.t('emails.recoverPassword.subject');
-    const body = this.i18n
-      .t('emails.recoverPassword.body')
-      .replace('{{redirectUrl}}', redirectUrl);
+    const subject = await this.i18n.t('emails.recoverPassword.subject');
+    const body = (await this.i18n.t('emails.recoverPassword.body')).replace(
+      '{{redirectUrl}}',
+      redirectUrl,
+    );
 
     await this.emailService.send({
       from,
@@ -75,12 +77,10 @@ export class MessagingService {
   }) {
     const { from, to, user } = input;
 
-    const subject = await this.i18n
-      .t('emails.notificationCartActive.subject')
-      .replace('{{name}}', user.person.name);
-
-    const body = await this.i18n
-      .t('emails.notificationCartActive.body')
+    const subject = (
+      await this.i18n.t('emails.notificationCartActive.subject')
+    ).replace('{{name}}', user.person.name);
+    const body = (await this.i18n.t('emails.notificationCartActive.body'))
       .replace('{{name}}', user.person.name)
       .replace('{{email}}', user.email);
 
@@ -103,9 +103,9 @@ export class MessagingService {
     const name = user.person?.name;
     const email = user.email;
 
-    const subject = await this.i18n
-      .t(`emails.payment${capitalize(status)}.subject`)
-      .replace('{{name}}', user.person.name);
+    const subject = (
+      await this.i18n.t(`emails.payment${capitalize(status)}.subject`)
+    ).replace('{{name}}', user.person.name);
 
     const itemsList = order?.items
       .map((item) => {

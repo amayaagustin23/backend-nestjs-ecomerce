@@ -5,7 +5,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import {
   Address,
   CouponStatus,
@@ -21,7 +20,6 @@ import { PaginationArgs } from 'src/common/pagination/pagination.interface';
 import { CryptoService } from 'src/services/crypto/crypto.service';
 import { generateCustomCode, parseDateToRange } from 'src/utils/parsers';
 import { hashPassword } from 'src/utils/password';
-import { MessagingService } from '../../services/messaging/messaging.service';
 import { PrismaService } from '../../services/prisma/prisma.service';
 import {
   AddressDto,
@@ -32,13 +30,11 @@ import {
 
 @Injectable()
 export class UsersService {
-  private user: Prisma.UserDelegate;
+  private readonly user: Prisma.UserDelegate;
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly i18n: I18nService,
-    private jwtService: JwtService,
-    private messagingService: MessagingService,
-    private cryptoService: CryptoService,
+    private readonly cryptoService: CryptoService,
   ) {
     this.user = prisma.user;
   }

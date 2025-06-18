@@ -1,16 +1,32 @@
 {
   "recoverPassword": {
     "subject": "Recover your password",
-    "body": "<p>To recover your password, click on the following link:</p><a href=\"{redirectUrl}\">Recover password</a>"
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Forgot your password?</h2><p>To regain access to your account, click the button below:</p><p style=\"text-align: center;\"><a href=\"{{redirectUrl}}\" style=\"display: inline-block; padding: 12px 24px; background-color: #3b5998; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;\">Reset password</a></p><p style=\"margin-top: 20px;\">If you didn't request this change, just ignore this message.</p></div></body></html>"
   },
-  "newPassword": {
-    "subject": "Action required: Create a new password",
-    "body": "<p>You need to create a new password to continue using your account. Click the following link to make the change.</p><a href=\"{redirectUrl}\">Change password</a>"
+  "registerEmail": {
+    "subject": "Welcome to the platform!",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Hi {{name}},</h2><p>Thanks for registering. We're happy to have you on board!</p><p>We hope you enjoy the experience.</p></div></body></html>"
   },
   "resetPassword": {
-    "subject": "Change password",
-    "body": "<p>Your password was changed successfully</p>"
+    "subject": "Password changed",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Password updated</h2><p>Your password was successfully changed.</p></div></body></html>"
   },
-  "changePassword": "Your password was changed successfully",
-  "sendEmailURL": "The link has been sent, please verify your email account"
+  "notificationCartActive": {
+    "subject": "Hi {{name}}, you have items waiting in your cart 🛒",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Hi {{name}}!</h2><p>We noticed you have items in your cart that you haven't completed yet.</p><p>Hurry up before they run out!</p><p>You can continue your purchase by logging in with the email: <strong>{{email}}</strong></p><p><a href=\"https://tuplataforma.com/carrito\" style=\"color: #3b5998; font-weight: bold;\">Go to cart</a></p></div></body></html>"
+  },
+  "paymentApproved": {
+    "subject": "Thanks for your purchase, {{name}}! 🎉",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; border-radius: 10px; padding: 25px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Thanks for your purchase, {{name}}!</h2><p>Your payment was <strong style=\"color: #3b5998;\">successfully approved</strong> and your order is being processed.</p><p><strong>Order number:</strong> {{orderId}}</p><hr/><h3>Order summary:</h3>{{itemsList}}<p><strong>Subtotal:</strong> {{subtotal}} ARS</p><p><strong>Shipping:</strong> {{shippingCost}} ARS</p><p><strong>Total:</strong> <span style=\"color: #3b5998; font-weight: bold;\">{{total}} ARS</span></p><hr/><p>You will receive more information about the shipping soon. If you have any questions, feel free to reply to this email or contact us.</p><p style=\"font-size: 14px; color: #7f8c8d;\">Your customer support team 🛍️</p></div></body></html>"
+  },
+  "paymentPending": {
+    "subject": "We're waiting for your payment, {{name}}",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 25px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Hi {{name}},</h2><p>Your order was created but the payment is still pending.</p><p>You can complete it by logging in with your email: <strong>{{email}}</strong></p><hr/><h3>Order summary:</h3>{{itemsList}}<p><strong>Subtotal:</strong> {{subtotal}} ARS</p><p><strong>Shipping:</strong> {{shippingCost}} ARS</p><p><strong>Total:</strong> <span style=\"color: #3b5998; font-weight: bold;\">{{total}} ARS</span></p><hr/><p>If you already made the payment, we’ll notify you as soon as it’s confirmed.</p><p>Thank you for your purchase.</p></div></body></html>"
+  },
+  "paymentCancelled": {
+    "subject": "Your payment was cancelled, {{name}}",
+    "body": "<html><body style=\"font-family: Arial, sans-serif; background-color: #f5f8fa; padding: 20px;\"><div style=\"background-color: #ffffff; padding: 25px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,50,0.1);\"><h2 style=\"color: #2c3e50;\">Hi {{name}},</h2><p>We're sorry to inform you that the payment for your order was cancelled.</p><p>If it was a mistake, you can generate a new order from your account or contact us for further assistance.</p><p>Thanks anyway for your interest.</p></div></body></html>"
+  },
+  "changePassword": "Your password was successfully updated.",
+  "sendEmailURL": "Link sent. Check your email inbox."
 }

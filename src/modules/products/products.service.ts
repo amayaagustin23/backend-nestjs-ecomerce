@@ -480,6 +480,7 @@ export class ProductsService {
     const sizes = await this.prisma.size.findMany();
     return sizes;
   }
+
   async getUniqueColors() {
     const colors = await this.prisma.color.findMany();
     return colors;

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { CartStatus, Prisma } from '@prisma/client';
-import * as moment from 'moment';
+import moment from 'moment';
 import { I18nService } from 'nestjs-i18n';
 import { MessagingService } from 'src/services/messaging/messaging.service';
 import { PrismaService } from 'src/services/prisma/prisma.service';

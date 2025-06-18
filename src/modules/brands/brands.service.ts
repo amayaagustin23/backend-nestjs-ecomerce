@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -38,7 +39,9 @@ export class BrandsService {
           this.i18n.t('errors.conflict', { args: { model: 'Brand' } }),
         );
       }
-      throw e;
+      throw new BadRequestException(
+        this.i18n.t('errors.unexpected', { args: { model: 'Brand' } }),
+      );
     });
   }
 
@@ -89,7 +92,9 @@ export class BrandsService {
           this.i18n.t('errors.conflict', { args: { model: 'Brand' } }),
         );
       }
-      throw e;
+      throw new BadRequestException(
+        this.i18n.t('errors.unexpected', { args: { model: 'Brand' } }),
+      );
     });
   }
 

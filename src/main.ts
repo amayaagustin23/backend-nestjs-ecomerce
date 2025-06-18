@@ -6,7 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { NestApplication, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { I18nValidationPipe } from 'nestjs-i18n';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
